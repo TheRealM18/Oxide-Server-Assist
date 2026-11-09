@@ -12,7 +12,7 @@ A permission-aware GUI launcher for 7 Days to Die. It owns one XUi window; compa
 
 ### Is it a replacement for a lot of separate menus?
 
-Yes. PermissionGui, AdminShop, VoteSkipNight, AdminKits, AdminSuite, DailyRewards, DynamicBackpack, PluginHotReload, TwitchIntegration, BuggeeNet and PlayerProfiles no longer need their own client windows. AuctionHouse uses the provider model. One client mod renders all of them.
+Yes. PermissionGui, AdminShop, VoteSkipNight, AdminKits, AdminSuite, DailyRewards, DynamicBackpack, PluginHotReload, MediaIntegration, TwitchIntegration, BuggeeNet, PlayerProfiles and SentinelAC render through Server Assist instead of shipping their own client windows. AuctionHouse uses the provider model. One client mod renders all of them.
 
 ### Is Server Assist a client mod or a server plugin?
 

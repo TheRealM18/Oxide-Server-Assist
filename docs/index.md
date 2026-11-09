@@ -144,7 +144,7 @@ Server Assist supports two ways for another plugin to take over the content pane
 
 A companion plugin registers a home-row entry. The player clicks the row and Server Assist enters **hook mode**: the Home / Shared / My Buttons tabs disappear, a **Back** button appears, and every action is forwarded to the companion until the player leaves.
 
-Use this for a self-contained feature that should look like one more tool on the board: PermissionGui, AdminShop, VoteSkipNight, AdminKits, AdminSuite, DailyRewards, DynamicBackpack, PluginHotReload, TwitchIntegration, BuggeeNet and PlayerProfiles.
+Use this for a self-contained feature that should look like one more tool on the board: PermissionGui, AdminShop, VoteSkipNight, AdminKits, AdminSuite, DailyRewards, DynamicBackpack, PluginHotReload, MediaIntegration, TwitchIntegration, BuggeeNet, PlayerProfiles and SentinelAC.
 
 ```csharp
 Plugin serverAssist = plugins.Find("ServerAssist");
@@ -263,7 +263,7 @@ This documentation is built with MkDocs Material and published through Read the 
 Yes. XUi windows cannot be pushed from the server. Every player who should see the board needs the same `ServerAssist` folder.
 
 **Does a companion plugin need a client DLL?**
-No. PermissionGui, AdminShop, AuctionHouse, VoteSkipNight, AdminKits, AdminSuite, DailyRewards, DynamicBackpack, PluginHotReload, TwitchIntegration, BuggeeNet and PlayerProfiles are server-only. They return the line protocol through the Server Assist client. PlayerProfiles can additionally use the optional `@pp|` companion protocol for in-place character switching.
+No. PermissionGui, AdminShop, AuctionHouse, VoteSkipNight, AdminKits, AdminSuite, DailyRewards, DynamicBackpack, PluginHotReload, MediaIntegration, TwitchIntegration, BuggeeNet, PlayerProfiles and SentinelAC are server-only. They return the line protocol through the Server Assist client. PlayerProfiles can additionally use the optional `@pp|` companion protocol for in-place character switching.
 
 **Can players make their own buttons?**
 Yes, with `serverassist.custom` and `AllowPlayerCustomButtons`. Player-made command buttons are disabled unless `AllowPlayerCommandButtons` is enabled.

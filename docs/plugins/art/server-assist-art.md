@@ -62,6 +62,7 @@ ServerAssistArt/
   REQUESTS_AdminSuite.md
   REQUESTS_AUCTIONHOUSE.md
   REQUESTS_DAILYREWARDS.md
+  REQUESTS_SentinelAC.md
   REQUESTS_TwitchIntegration.md
   REQUESTED_PLUGIN_HOT_RELOAD_ICONS.md
 ```
@@ -74,7 +75,7 @@ ServerAssistArt/
 | Measure | Value |
 |---|---|
 | Unique painted icons delivered | **60** (P0 + P1, per `ICON_PRIORITY.md`) |
-| Remaining requested icons | **30** (P2: Twitch buffs/debuffs and AdminSuite actions) |
+| Remaining requested icons | **42**: **30** P2 (Twitch buffs/debuffs and AdminSuite actions) plus **12** SentinelAC `sa_ac_*` follow-up icons |
 | PNGs currently in `UIAtlases/UIAtlas` | **162**, including legacy aliases |
 | Masters in `icons/` | **94** PNGs |
 | Previews in `preview/` | **94** PNGs |
@@ -198,6 +199,51 @@ files.
 The P2 streaming set is still requested in
 `REQUESTS_TwitchIntegration.md`: 30 sprites covering 9 buffs, 9 debuffs and 12
 AdminSuite actions.
+
+### Requested follow-up: SentinelAC (`sa_ac_*`)
+
+`SentinelAC` registers a Server Assist provider with three tabs: **Risk**,
+**Evidence**, and **Modules**. `REQUESTS_SentinelAC.md` asks for 12 dedicated
+`sa_ac_*` icons for that provider. They are **requested, not rendered**: the PNGs
+are not in `UIAtlases/UIAtlas/` yet, and no plugin config points at them.
+
+Until the set ships, SentinelAC uses existing finished sprites as placeholders:
+
+| SentinelAC use | Current placeholder |
+|---|---|
+| Provider card, banner, background | `sprite:sa_nav_moderation` |
+| Risk tab and risk rows | `sprite:sa_act_warn` |
+| Evidence tab and evidence rows | `sprite:sa_nav_logs` |
+| Modules tab | `sprite:sa_nav_server` |
+| Player rows | `sprite:sa_nav_players` |
+| Watch / unwatch | `sprite:sa_act_spectate` |
+| Clear evidence | `sprite:sa_nav_logs` |
+| Export evidence | `sprite:sa_nav_snapshots` |
+| Kick / ban / refresh | `sprite:sa_act_kick`, `sprite:sa_act_ban`, `sprite:sa_plugin_hot_reload` |
+| Module rows | `sprite:sa_nav_teleport`, `sprite:sa_nav_moderation`, `sprite:sa_nav_items`, `sprite:sa_nav_world`, `sprite:sa_act_godmode`, `sprite:sa_nav_snapshots` |
+
+The 12 requested keys:
+
+| Sprite key | Used for |
+|---|---|
+| `sa_ac_panel` | Provider/home card, banner, background |
+| `sa_ac_risk` | Risk tab and risk summary row |
+| `sa_ac_evidence` | Evidence tab and evidence dossier rows |
+| `sa_ac_modules` | Modules tab and module summary rows |
+| `sa_ac_movement` | Movement module |
+| `sa_ac_combat` | Combat module |
+| `sa_ac_inventory` | Inventory/economy module |
+| `sa_ac_grief` | Grief module |
+| `sa_ac_exploit` | Exploit module |
+| `sa_ac_progression` | Progression module |
+| `sa_ac_clear` | Clear evidence button |
+| `sa_ac_export` | Export evidence button |
+
+The existing `sa_act_kick`, `sa_act_ban`, `sa_plugin_hot_reload`, `sa_act_prev`,
+`sa_act_next`, and `sa_nav_players` sprites stay in use and are not part of this
+request. After the art is rendered, the placeholder constants in
+`SentinelAC/oxide/plugins/SentinelAC.cs` are switched to the matching `sa_ac_*`
+keys.
 
 ---
 

@@ -326,7 +326,7 @@ The default players group receives `serverassist.use` and, when configured, `ser
 | Open AdminSuite | *(use the hook row)* | — | `adminsuite.use` |
 
 !!! tip
-    PermissionGui, AdminShop, VoteSkipNight, AdminKits, AdminSuite, DailyRewards, DynamicBackpack, PluginHotReload, TwitchIntegration, BuggeeNet and PlayerProfiles are **panels/hook rows**, not window targets. They appear as cards automatically when their plugins register. Do not create buttons that target old standalone windows for them; a `backpack` command button, if you need one, runs the chat command and opens the panel.
+    PermissionGui, AdminShop, VoteSkipNight, AdminKits, AdminSuite, DailyRewards, DynamicBackpack, PluginHotReload, MediaIntegration, TwitchIntegration, BuggeeNet, PlayerProfiles and SentinelAC are **panels/hook rows**, not window targets. They appear as cards automatically when their plugins register. Do not create buttons that target old standalone windows for them; a `backpack` command button, if you need one, runs the chat command and opens the panel.
 
 ---
 

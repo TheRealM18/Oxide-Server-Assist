@@ -81,8 +81,12 @@ applies the pack; that is why a restart is required.
    - `AutoRestart` to `true` so the client restarts by itself after the pack is
      staged.
    - `CheckOnMainMenu` to auto-check when the main menu opens. `ShowMainMenuButton`
-     adds a **Check Mod Pack Updates** button at the top-right of the main menu
-     so the window can be reopened after it is closed.
+     adds a **Mod Packs** button at the top-right of the main menu so the window
+     can be reopened after it is closed.
+   - `PackIndexUrl` to load additional pack profiles from a remote JSON index.
+     `DefaultPackId` chooses the first-run pack, and `DefaultPackName` labels the
+     legacy single-pack profile. Local `<Packs>` entries win over remote entries
+     with the same id.
    - `MaxParallelDownloads` to control parallel downloads. Default `4`; range
      `1`–`10`. Google Drive often throttles above 3–4 connections.
    - Optionally paste `public-key.xml` into `PublicKeyXml` and set
@@ -92,9 +96,9 @@ applies the pack; that is why a restart is required.
    mod, plus the number completed and the active parallelism.
 
 4. Start 7 Days to Die **without EAC**.
-5. At the main menu, the **QLN Mod Pack** window appears. Review the list, then
-   click **Download & Install**. If you close it, click **Check Mod Pack
-   Updates** at the top-right of the main menu to reopen it.
+5. At the main menu, the **QLN Mod Packs** window appears. Choose **Vanilla** or
+   a server pack, review the list, then click **Download & Install**. If you
+   close it, click **Mod Packs** at the top-right of the main menu to reopen it.
 6. When staging finishes, the client shows a short countdown and restarts
    automatically. `QLNPackUpdater.exe` applies the pack and relaunches the game.
    If `AutoRestart` is `false`, click **Restart & Update** instead.
@@ -109,6 +113,60 @@ only handles the client side. If a player already has an old copy of a pack mod
 in the game's installation folder (`...\7 Days To Die\Mods`), remove it: the user
 folder `%APPDATA%\7DaysToDie\Mods` loads first and would otherwise win with the
 new copy, leaving the old duplicate ignored.
+
+## Multiple mod packs
+
+The bootstrap has a built-in **Vanilla** profile and can list any number of
+server packs. The update window shows them as tabs; the top-right main-menu
+button is **Mod Packs**.
+
+Local profiles:
+
+```xml
+<Packs>
+  <Pack>
+    <Id>qln</Id>
+    <Name>QLN Server</Name>
+    <ManifestUrl>https://drive.google.com/file/d/FILE_ID/view?usp=sharing</ManifestUrl>
+    <GameVersion>3.4</GameVersion>
+  </Pack>
+  <Pack>
+    <Id>other</Id>
+    <Name>Other Server</Name>
+    <ManifestUrl>https://example.com/other/manifest.json</ManifestUrl>
+  </Pack>
+</Packs>
+```
+
+Remote index (`PackIndexUrl`):
+
+```json
+{
+  "packs": [
+    {
+      "id": "other",
+      "name": "Other Server",
+      "manifestUrl": "https://example.com/other/manifest.json",
+      "gameVersion": "3.4"
+    }
+  ]
+}
+```
+
+Local profiles win when ids collide. Remote entries can add new packs, and the
+**Refresh Packs** button re-fetches the index.
+
+Switching profiles is automatic and safe:
+
+- Mods shared by both packs with the same folder/version/hash are kept.
+- Mods installed by the previous pack but absent from the new pack are removed.
+- Unrelated, manually installed mods are never touched.
+- **Vanilla** removes all bootstrap-managed pack folders.
+- The updater records the newly active pack so the selection survives restarts.
+
+The first time a pack is selected, its manifest is checked and a normal staged
+update is created. Choosing Vanilla or a different pack uses the same download,
+hash verification, backup, and restart flow.
 
 ## Build from source
 
@@ -494,9 +552,9 @@ staged update, delete `Data\pending.xml` and `Data\staging`.
 
 **I closed the update window**
 
-Click **Check Mod Pack Updates** at the top-right of the main menu. It reopens
-the window and checks again. If an update is already staged, the button reads
-**Finish Mod Pack Update**. Set `ShowMainMenuButton` to `false` to hide it.
+Click **Mod Packs** at the top-right of the main menu. It reopens the window
+and checks again. If an update is already staged, the button reads
+**Finish Update**. Set `ShowMainMenuButton` to `false` to hide it.
 
 **"Configuration needed"**
 

@@ -275,3 +275,18 @@ Files live under `oxide/data/PlayerProfiles/<safe-player-id>/`. Keep the `.bak1`
 More: [PlayerProfiles](../../plugins/player/player-profiles.md).
 
 ---
+
+## Media and Twitch integrations
+
+### Both MediaIntegration and TwitchIntegration are installed
+
+Remove one before reloading. Both poll the same relay and can register a Server Assist panel, which can duplicate links or apply the same reward twice. Use [Media Integration](../../plugins/utilities/media-integration.md) as the current platform-neutral path and keep [Twitch Integration](../../plugins/utilities/twitch-integration.md) only as a rollback copy.
+
+### Relay reachable but no events arrive
+
+- Confirm the plugin's `ServerKey` matches `servers[].apiKey` in the relay configuration.
+- Confirm the relay is running and reachable over HTTPS.
+- Check the relay log for EventSub or webhook errors.
+- For custom webhooks, verify the HMAC signature, timestamp, nonce and the 64 KiB body limit.
+
+---

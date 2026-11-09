@@ -14,6 +14,7 @@ namespace QLNPackBootstrap
     internal sealed class PackPending
     {
         public string PackVersion = "";
+        public string ActivePackId = "";
         public string CreatedAt = "";
         public string StageRoot = "";
         public List<PendingMod> Apply = new List<PendingMod>();
@@ -40,6 +41,7 @@ namespace QLNPackBootstrap
                 PackPending pending = new PackPending
                 {
                     PackVersion = ReadElement(root, "PackVersion"),
+                    ActivePackId = ReadElement(root, "ActivePackId"),
                     CreatedAt = ReadElement(root, "CreatedAt"),
                     StageRoot = ReadElement(root, "StageRoot")
                 };
@@ -115,6 +117,7 @@ namespace QLNPackBootstrap
             document.AppendChild(root);
 
             AppendElement(document, root, "PackVersion", PackVersion ?? "");
+            AppendElement(document, root, "ActivePackId", ActivePackId ?? "");
             AppendElement(document, root, "CreatedAt", CreatedAt ?? DateTime.UtcNow.ToString("o"));
             AppendElement(document, root, "StageRoot", StageRoot ?? "");
 

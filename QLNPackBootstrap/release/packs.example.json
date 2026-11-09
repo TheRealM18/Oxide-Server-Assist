@@ -1,0 +1,13 @@
+{
+  "packs": [
+    {
+      "id": "other",
+      "name": "Other Server",
+      "manifestUrl": "https://example.com/other/manifest.json",
+      "signatureUrl": "",
+      "accessToken": "",
+      "gameVersion": "3.4",
+      "notes": "Example remote pack entry."
+    }
+  ]
+}

@@ -110,6 +110,8 @@ $plugins = @(
     @{ Name = "PermissionGui"; Source = "PermissionGui/oxide/plugins/PermissionGui.cs"; Extras = @("PermissionGui/README.txt", "PermissionGui/TEMPLATE_self_permissions.txt") },
     @{ Name = "PlayerProfiles"; Source = "PlayerProfiles/oxide/plugins/PlayerProfiles.cs"; Extras = @("PlayerProfiles/README.txt", "PlayerProfiles/icon-request.md", "PlayerProfiles/update.md", "PlayerProfiles/Config/PlayerProfiles.example.json") },
     @{ Name = "PluginHotReload"; Source = "PluginHotReload/oxide/plugins/PluginHotReload.cs"; Extras = @("PluginHotReload/README.txt") },
+    @{ Name = "MediaIntegration"; Source = "MediaIntegration/oxide/plugins/MediaIntegration.cs"; Extras = @("MediaIntegration/README.md", "MediaIntegration/DESIGN.md", "MediaIntegration/PLATFORMS.md", "MediaIntegration/MIGRATION.md", "MediaIntegration/ADMIN.md", "MediaIntegration/UNOFFICIAL_ADAPTERS.md", "MediaIntegration/ICONS.md", "MediaIntegration/oxide/config/MediaIntegration.example.json", "MediaIntegration/MEDIA_EVENT.schema.json") },
+    @{ Name = "SentinelAC"; Source = "SentinelAC/oxide/plugins/SentinelAC.cs"; Extras = @("SentinelAC/README.txt", "SentinelAC/update.md", "SentinelAC/docs/DESIGN.md", "SentinelAC/docs/QUICKSTART.md", "SentinelAC/Config/SentinelAC.example.json") },
     @{ Name = "ServerAssist"; Source = "ServerAssist/oxide/plugins/ServerAssist.cs"; Extras = @("ServerAssist/README.txt", "ServerAssist/API.md", "ServerAssist/update.md", "ServerAssist/MIGRATION.md") },
     @{ Name = "TwitchIntegration"; Source = "TwitchIntegration/oxide/plugins/TwitchIntegration.cs"; Extras = @("TwitchIntegration/README.md", "TwitchIntegration/DESIGN.md") },
     @{ Name = "VoteSkipNight"; Source = "VoteSkipNight/oxide/plugins/VoteSkipNight.cs"; Extras = @("VoteSkipNight/README.txt") }
@@ -264,6 +266,31 @@ if (Test-Path $twitchSource) {
         $generated.Add($zipPath) | Out-Null
 
         $groupTarget = Join-Path $programGroupStage ("TwitchRelay/" + $runtime.Name)
+        New-Item -ItemType Directory -Force -Path $groupTarget | Out-Null
+        Copy-Item -Path (Join-Path $runtime.FullName "*") -Destination $groupTarget -Recurse -Force
+    }
+}
+
+$mediaRelaySource = Join-Path $Root "release-inputs/programs/MediaRelay"
+if (Test-Path $mediaRelaySource) {
+    $runtimeDirectories = Get-ChildItem -LiteralPath $mediaRelaySource -Directory
+    foreach ($runtime in $runtimeDirectories) {
+        $files = Get-ChildItem -LiteralPath $runtime.FullName -Recurse -File
+        if ($files.Count -eq 0) {
+            continue
+        }
+
+        $programVersion = Get-ProgramVersion $mediaRelaySource
+        if (-not $programVersion) {
+            $programVersion = $Version
+        }
+
+        $zipName = "MediaRelay-$programVersion-$($runtime.Name).zip"
+        $zipPath = Join-Path $Output $zipName
+        New-ZipFromDirectory $runtime.FullName $zipPath "MediaRelay/$($runtime.Name)"
+        $generated.Add($zipPath) | Out-Null
+
+        $groupTarget = Join-Path $programGroupStage ("MediaRelay/" + $runtime.Name)
         New-Item -ItemType Directory -Force -Path $groupTarget | Out-Null
         Copy-Item -Path (Join-Path $runtime.FullName "*") -Destination $groupTarget -Recurse -Force
     }

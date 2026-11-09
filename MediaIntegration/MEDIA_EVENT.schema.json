@@ -1,0 +1,257 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://media-integration.local/schemas/media-event.schema.json",
+  "title": "MediaEvent",
+  "description": "Normalized event emitted by every MediaRelay provider adapter.",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "id",
+    "platform",
+    "type",
+    "broadcasterId",
+    "occurredAt"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "type": "integer",
+      "const": 1
+    },
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Provider-stable event ID. Used for dedupe with platform."
+    },
+    "platform": {
+      "type": "string",
+      "pattern": "^[a-z0-9_-]+$",
+      "examples": [
+        "twitch",
+        "youtube",
+        "kick",
+        "trovo",
+        "tiktok",
+        "restream",
+        "custom"
+      ]
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "bits",
+        "sub",
+        "gift_sub",
+        "resub",
+        "channel_points",
+        "channel_points_update",
+        "automatic_reward",
+        "raid",
+        "follow",
+        "hype_train",
+        "chat",
+        "stream_online",
+        "stream_offline",
+        "viewer_count",
+        "donation",
+        "subscription",
+        "gift_subscription",
+        "reward",
+        "momentum",
+        "custom"
+      ]
+    },
+    "broadcasterId": {
+      "type": "string",
+      "description": "Immutable provider channel/user ID for the linked streamer, or the provider link key for webhook-only providers."
+    },
+    "broadcasterLogin": {
+      "type": "string"
+    },
+    "viewerId": {
+      "type": "string",
+      "description": "Immutable provider user ID. Empty for anonymous events."
+    },
+    "viewerLogin": {
+      "type": "string"
+    },
+    "viewerName": {
+      "type": "string"
+    },
+    "amount": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Native amount in the provider's unit. Bits, gifts, points, viewers, months, etc."
+    },
+    "amountMinor": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Optional fiat amount in minor units (cents). Use with currency."
+    },
+    "unit": {
+      "type": "string",
+      "examples": [
+        "bits",
+        "points",
+        "coins",
+        "gifts",
+        "stars",
+        "balloons",
+        "viewers",
+        "months",
+        "USD",
+        "EUR",
+        "KRW",
+        "JPY"
+      ]
+    },
+    "currency": {
+      "type": "string",
+      "pattern": "^([A-Z]{3})?$",
+      "description": "ISO 4217 code for fiat events, otherwise empty."
+    },
+    "normalizedUsd": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Optional USD equivalent. Providers may supply it; otherwise the plugin computes it from the staff-set CurrencyConversion table."
+    },
+    "tier": {
+      "type": "string",
+      "description": "Provider tier or membership level, e.g. 1000, 2000, 3000, prime, guard, gold."
+    },
+    "months": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Cumulative months for resub/renewal events."
+    },
+    "giftCount": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Number of gift subs/memberships in a batch."
+    },
+    "rewardId": {
+      "type": "string"
+    },
+    "rewardTitle": {
+      "type": "string"
+    },
+    "redemptionId": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "examples": [
+        "unfulfilled",
+        "fulfilled",
+        "canceled"
+      ]
+    },
+    "viewerCount": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Viewer count for raid/viewer_count events."
+    },
+    "message": {
+      "type": "string",
+      "description": "Chat text or donation message, when the provider exposes it."
+    },
+    "isGift": {
+      "type": "boolean",
+      "default": false
+    },
+    "isAnonymous": {
+      "type": "boolean",
+      "default": false
+    },
+    "isTest": {
+      "type": "boolean",
+      "default": false
+    },
+    "occurredAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "receivedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "rawType": {
+      "type": "string",
+      "description": "Original provider event name, for audit/debug."
+    },
+    "raw": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Original provider payload, redacted as needed."
+    },
+    "extra": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      },
+      "description": "Optional normalized key/value extras, e.g. hype phase, streak months."
+    }
+  },
+  "examples": [
+    {
+      "schemaVersion": 1,
+      "id": "twitch-cheer-123",
+      "platform": "twitch",
+      "type": "bits",
+      "broadcasterId": "123456",
+      "broadcasterLogin": "streamer",
+      "viewerId": "987654",
+      "viewerLogin": "viewer",
+      "viewerName": "Viewer",
+      "amount": 500,
+      "unit": "bits",
+      "currency": "",
+      "rawType": "channel.cheer",
+      "occurredAt": "2026-11-09T12:00:00Z",
+      "receivedAt": "2026-11-09T12:00:01Z"
+    },
+    {
+      "schemaVersion": 1,
+      "id": "youtube-superchat-abc",
+      "platform": "youtube",
+      "type": "donation",
+      "broadcasterId": "UC123",
+      "viewerId": "UC456",
+      "viewerName": "Viewer",
+      "amount": 500,
+      "amountMinor": 500,
+      "unit": "USD",
+      "currency": "USD",
+      "normalizedUsd": 5.0,
+      "message": "Great run!",
+      "rawType": "superChatEvent",
+      "occurredAt": "2026-11-09T12:05:00Z"
+    },
+    {
+      "schemaVersion": 1,
+      "id": "kick-sub-789",
+      "platform": "kick",
+      "type": "subscription",
+      "broadcasterId": "kick-channel-id",
+      "viewerId": "kick-user-id",
+      "viewerLogin": "viewer",
+      "amount": 1,
+      "unit": "months",
+      "tier": "1",
+      "occurredAt": "2026-11-09T12:10:00Z"
+    },
+    {
+      "schemaVersion": 1,
+      "id": "custom-1700000000",
+      "platform": "custom",
+      "type": "donation",
+      "broadcasterId": "streamer-webhook-token",
+      "viewerId": "viewer-42",
+      "viewerName": "Viewer",
+      "amount": 250,
+      "unit": "points",
+      "rawType": "custom.webhook",
+      "occurredAt": "2026-11-09T12:15:00Z"
+    }
+  ]
+}

@@ -14,6 +14,7 @@
     <Compile Include="..\..\src\PackUrls.cs" Link="PackUrls.cs" />
     <Compile Include="..\..\src\PackDownloadResolver.cs" Link="PackDownloadResolver.cs" />
     <Compile Include="..\..\src\PackManifest.cs" Link="PackManifest.cs" />
+    <Compile Include="..\..\src\PackProfile.cs" Link="PackProfile.cs" />
     <Compile Include="..\..\src\PackState.cs" Link="PackState.cs" />
     <Compile Include="..\..\src\PackPending.cs" Link="PackPending.cs" />
     <Compile Include="..\..\src\PackSignature.cs" Link="PackSignature.cs" />

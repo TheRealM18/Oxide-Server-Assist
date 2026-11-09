@@ -295,6 +295,7 @@ namespace QLNPackUpdater
         private static void WriteState(XmlElement pendingRoot, string dataDir)
         {
             string packVersion = ReadElement(pendingRoot, "PackVersion");
+            string activePackId = ReadElement(pendingRoot, "ActivePackId");
             XmlNode stateNode = pendingRoot.SelectSingleNode("State");
 
             XmlWriterSettings settings = new XmlWriterSettings
@@ -310,6 +311,7 @@ namespace QLNPackUpdater
             {
                 writer.WriteStartElement("PackState");
                 writer.WriteElementString("PackVersion", packVersion);
+                writer.WriteElementString("ActivePackId", activePackId);
                 writer.WriteElementString("InstalledAt", DateTime.UtcNow.ToString("o"));
                 writer.WriteStartElement("Mods");
 

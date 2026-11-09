@@ -37,11 +37,12 @@ You only install this once. After that, the pack updates itself from the server.
    with Steam already running. You can also use your usual no-EAC shortcut.
    If you launch with EAC on, this mod is skipped and no window appears.
 
-5. At the main menu, the "QLN Mod Pack" window appears.
-   Review the list, then click "Download & Install".
+5. At the main menu, the "QLN Mod Packs" window appears.
+   Choose "Vanilla" or your server pack, review the list, then click
+   "Download & Install".
 
-   If you close the window, click "Check Mod Pack Updates" at the top-right
-   of the main menu to open it again.
+   If you close the window, click "Mod Packs" at the top-right of the main
+   menu to open it again.
 
 6. When it says "All mods downloaded", the client restarts automatically.
    It closes, applies the mods, and starts again. Let it finish.

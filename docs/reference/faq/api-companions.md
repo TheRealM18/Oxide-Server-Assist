@@ -6,6 +6,10 @@ Part of the [FAQ](index.md).
 
 Full installation, command and configuration pages for each bundled plugin live in the [plugin reference](../../plugins/index.md).
 
+### Should I use MediaIntegration or TwitchIntegration?
+
+Use [Media Integration](../../plugins/utilities/media-integration.md). It is the platform-neutral successor and supports Twitch plus signed custom webhooks. [Twitch Integration](../../plugins/utilities/twitch-integration.md) remains the Twitch-only rollback path. Never run both: they poll the same relay and can apply rewards twice.
+
 ### How does a plugin add a row?
 
 ```csharp

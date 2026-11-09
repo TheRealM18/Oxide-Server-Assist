@@ -1,4 +1,4 @@
-AdminShop 1.1.1
+AdminShop 1.2.0
 ===============
 
 AdminShop is a server-side Oxide plugin. It does not ship a client DLL and does
@@ -9,11 +9,14 @@ The shop lets a player buy:
 
   * any item that has a trader economic value, priced from the vanilla trader
     buy price and multiplied by a configurable amount (10x by default), and
-  * configured permission products for an exact duke price.
+  * configured permission products, either permanently or as a temporary rental.
 
 Payment is taken in Duke's Casino Tokens (casinoCoin). Item prices keep the
 "rush tax" high, while permission products let you sell access to a perk, a
 command, or a bundle of nodes without editing Oxide permissions by hand.
+
+Only items at or above MinItemPrice are listed, so the shop focuses on normal,
+useful items at heavily inflated rates instead of near-free junk.
 
 Purchases always go into the buyer's own inventory, and permission purchases
 always grant the permission directly to the buyer. A rich player can help a
@@ -105,13 +108,14 @@ COMMANDS
   Admin only.
 
 /adminshop catalog
-  Print the item catalog size, permission product count and configured currency.
-  Admin only.
+  Print the item catalog size, how many items were skipped by MinItemPrice, the
+  permission product count and the configured currency. Admin only.
 
 /adminshop perms
 /adminshop permissions
-  List configured permission products with their id, price, enabled state, node
-  registration state, and permission nodes. Admin only.
+  List configured permission products with their id, permanent price, temporary
+  price/duration, enabled state, node registration state, and permission nodes.
+  Also reports how many temporary grants are currently active. Admin only.
 
 /adminshop help
   Show command help.
@@ -147,6 +151,20 @@ If you want a different convenience tax, change PriceMultiplier. For example:
 All item prices are recalculated on the server. The client never sends a price or
 a currency amount.
 
+MINIMUM ITEM PRICE
+------------------
+
+MinItemPrice keeps ultra-cheap entries out of the shop. After an item's unit
+price is computed, any item below MinItemPrice is skipped. The default is 500
+dukes. This removes entries such as a 300-duke vehicle part that do not fit the
+"normal items at heavily inflated rates" goal.
+
+  "MinItemPrice": 500
+
+Set it to 0 to list every item with an economic value. The number of skipped
+items is written to the server log when the catalog is built and is also shown
+by /adminshop catalog. Run /adminshop reload after changing it.
+
 
 PERMISSION PRODUCT PRICING
 --------------------------
@@ -154,21 +172,46 @@ PERMISSION PRODUCT PRICING
 A permission product has its own exact Price in dukes. PriceMultiplier does not
 apply to permission products. A product priced at 5000 always costs 5000 dukes.
 
-Permission products are permanent user grants. Buying a product grants each
-configured permission node to the buyer's Oxide user record and saves the
-permission data immediately. Group permissions are not changed.
+The shop presents two permission categories:
 
-If the player already has every node in the product, the Buy button is disabled.
+  Permanent Permissions
+    Price is the product's Price field. Buying it grants each configured node to
+    the buyer's Oxide user record permanently.
+
+  Temporary Permissions
+    Price defaults to one tenth of the permanent price, rounded down and never
+    below 1 duke. A product can override that with TemporaryPrice. Buying it
+    grants the same nodes as a direct Oxide permission, but records an expiry in
+    oxide/data/AdminShop/permissions.json. When the expiry passes, AdminShop
+    revokes the direct permission automatically.
+
+Temporary duration defaults to TemporaryPermissionHours (24 hours). A product can
+override it with TemporaryHours. Values are clamped to 1-8760 hours. Buying the
+same temporary product again while it is active extends the expiry instead of
+creating a duplicate grant.
+
+If the player already has every node permanently, both buy buttons are disabled.
 If the player has some nodes in a bundle but not all, the product can be bought
-and only the missing nodes are granted for the full product price.
+and only the missing nodes are granted for the full product price. Buying a
+permanent product removes any temporary grant records for the same nodes so a
+later expiry cannot revoke the permanent grant.
+
+Admin price editing
+  Admins with adminshop.admin see a Manage Prices button on the permission
+  categories screen. Pick a product to edit its permanent price, temporary
+  price, temporary duration, or enabled state. Changes are saved to
+  oxide/config/AdminShop.json immediately. Setting the temporary price to 0
+  restores automatic 1/10 pricing, and setting the duration to 0 restores the
+  global default.
 
 
 WHAT IS FOR SALE
 ----------------
 
 The item catalog includes every item class that has an economic value above
-MinEconomicValue. By default that includes weapons, ammo, armor, mods, food,
-medical items, resources, books, schematics, vehicles, and block items.
+MinEconomicValue and a computed unit price of at least MinItemPrice. By default
+that includes weapons, ammo, armor, mods, food, medical items, resources, books,
+schematics, vehicles, and block items.
 
 The catalog is built from the live ItemClass list after the world starts, so
 items added by other mods appear automatically when they have an economic value.
@@ -180,6 +223,7 @@ Excluded by default:
   - items marked as hidden
   - creative/dev/console/test-only items
   - items with no economic value
+  - items whose computed unit price is below MinItemPrice
 
 You can change the filters in oxide/config/AdminShop.json:
 
@@ -187,6 +231,7 @@ You can change the filters in oxide/config/AdminShop.json:
   IncludeCreativeItems  include dev/console/test items (default false)
   IncludeHiddenItems    include hidden items (default false)
   MinEconomicValue      minimum economic value to list (default 0)
+  MinItemPrice          minimum computed unit price to list (default 500)
 
 The item categories are heuristics based on item tags. An item that does not
 match a category still appears under "Other" and is always searchable by name.
@@ -209,6 +254,8 @@ Example:
       "Permission": "vip.use",
       "Permissions": [],
       "Price": 5000,
+      "TemporaryPrice": 0,
+      "TemporaryHours": 0,
       "Enabled": true
     },
     {
@@ -218,22 +265,28 @@ Example:
       "Permission": "",
       "Permissions": [ "kit.basic", "kit.advanced" ],
       "Price": 12000,
+      "TemporaryPrice": 900,
+      "TemporaryHours": 12,
       "Enabled": true
     }
   ]
 
 Fields:
 
-  Id            optional stable id. If blank, it is generated from Name.
-                Letters, numbers, spaces, '_', '-' and '.' are converted to a
-                lowercase id. Duplicate ids get a numeric suffix.
-  Name          display name on the Permissions screen.
-  Description   optional description shown on the detail screen.
-  Permission    one permission node. Can be blank if Permissions is used.
-  Permissions   optional list of additional permission nodes.
-  Price         exact duke price. 0 makes the product free.
-  Enabled       false hides the product from players. Admin /adminshop perms
-                still lists it.
+  Id              optional stable id. If blank, it is generated from Name.
+                  Letters, numbers, spaces, '_', '-' and '.' are converted to a
+                  lowercase id. Duplicate ids get a numeric suffix.
+  Name            display name on the Permissions screen.
+  Description     optional description shown on the detail screen.
+  Permission      one permission node. Can be blank if Permissions is used.
+  Permissions     optional list of additional permission nodes.
+  Price           exact permanent duke price. 0 makes the permanent grant free.
+  TemporaryPrice  exact temporary duke price. 0 (default) means automatic
+                  one tenth of Price, rounded down, minimum 1.
+  TemporaryHours  temporary duration in hours, 1-8760. 0 (default) uses the
+                  global TemporaryPermissionHours.
+  Enabled         false hides the product from players. Admin /adminshop perms
+                  still lists it.
 
 If both Permission and Permissions are set, all of the nodes are used. Duplicate
 nodes are removed. Product order in the config is the order shown in the shop.
@@ -266,16 +319,29 @@ Home
   Item category buttons and item counts. If permission products are enabled, a
   Permissions button is also shown.
 
+Permission categories
+  Two rows: Permanent Permissions and Temporary Permissions. Each row shows how
+  many nodes the player owns or how many temporary grants are active. Admins
+  with adminshop.admin also see a Manage Prices button.
+
 Permissions list
-  Up to ten permission products per page. Each row shows the duke price, whether
-  the player already owns it, and the permission nodes. Disabled products are
+  Up to ten permission products per page. The title and prices follow the chosen
+  category. Permanent rows show the permanent price and owned state; temporary
+  rows show the rental price, duration, and active state. Disabled products are
   hidden from players.
 
 Permission detail
-  Shows the product name, price, current dukes, ownership status, permission
-  nodes, product type, description, and product id. Buy Permission is enabled
-  only when the player does not already own it, the nodes are registered, the
-  player can afford it, and the player is online.
+  Shows the product name, price, duration (temporary only), current dukes,
+  ownership or active state, permission nodes, product type, description, and
+  product id. The buy button is enabled only when the product is enabled, the
+  nodes are registered, the player can afford it, and the player is online.
+  Temporary products can be renewed to extend their expiry.
+
+Manage Prices (admin)
+  Lists every permission product, including disabled ones. Pick a product to
+  edit its permanent price, temporary price, temporary duration, or enabled
+  state. Text prompts accept whole numbers. Changes save to the config file
+  immediately.
 
 Category / search results
   Ten items per page. Each row shows the price per item, max stack, quality, and
@@ -327,8 +393,9 @@ Selected ServerAssistArt sprite map:
   Warning / locked               sprite:sa_act_warn
   Owned                          sprite:sa_act_godmode
 
-Permission rows also use short badges: PERM, BUNDLE, OWNED, LOCKED, NONE and
-ERROR. Item rows use the item's own icon and no badge.
+Permission rows also use short badges: PERM, TEMP, BUNDLE, OWNED, ACTIVE,
+LOCKED, NONE, EDIT, OFF and ERROR. Item rows use the item's own icon and no
+badge.
 
 The planned `sa_shop_categories`, `sa_shop_search`, `sa_shop_buy` and
 `sa_shop_permissions` sprites are not in the finished ServerAssistArt atlas yet.
@@ -366,9 +433,16 @@ Permissions:
 
 - Payment is taken from the player's toolbelt and backpack.
 - The permission is granted directly to the buyer's Oxide user record.
+- Permanent purchases grant the nodes permanently and remove any temporary grant
+  records for the same nodes.
+- Temporary purchases also grant the nodes directly, but record an expiry in
+  oxide/data/AdminShop/permissions.json. A timer checks expiries every minute
+  and revokes expired direct permissions. Buying an active temporary product
+  again extends its expiry.
 - If any node in a bundle cannot be granted, the nodes already granted by that
   purchase are revoked and the dukes are refunded.
-- Permission data is saved immediately with permission.SaveData().
+- Permission data is saved immediately with permission.SaveData(). Temporary
+  grant data is saved to its own data file.
 - Purchases are logged when LogPurchases is true.
 - The buyer must be online when the purchase is processed.
 
@@ -389,6 +463,8 @@ Default oxide/config/AdminShop.json:
   "ItemQuality": 6,
   "CurrencyItem": "casinoCoin",
   "MaxQuantityPerPurchase": 1000,
+  "MinItemPrice": 500,
+  "TemporaryPermissionHours": 24,
   "IncludeBlocks": true,
   "IncludeCreativeItems": false,
   "IncludeHiddenItems": false,
@@ -406,6 +482,13 @@ through 6. The price uses the same quality modifier the trader uses.
 
 MaxQuantityPerPurchase caps one item purchase. The inventory space check still
 applies after this cap.
+
+MinItemPrice hides items whose computed unit price is below the value. Default
+500. Set it to 0 to list everything.
+
+TemporaryPermissionHours is the default duration for temporary permission
+purchases. Valid values are 1 through 8760. Individual products can override it
+with TemporaryHours.
 
 HookLabel, HookDescription and HookPermission control the ServerAssist home-row
 button. HookPermission is checked by ServerAssist when it builds the home screen.
@@ -461,16 +544,30 @@ The Admin Shop button is missing from ServerAssist
 
 The Permissions button is missing
   There are no enabled PermissionProducts. Add at least one product with
-  "Enabled": true and run /adminshop reload.
+  "Enabled": true and run /adminshop reload. Admins with adminshop.admin still
+  see the button when products exist but are all disabled, so they can re-enable
+  them from Manage Prices.
 
 A permission product says unavailable
   One or more of its permission nodes is not registered by a loaded plugin, or
   the product uses a wildcard. Run /adminshop perms for the exact reason. Install
   the plugin that owns the node, or use a registered node.
 
-Buy Permission is disabled
-  The player already owns every node in the product, is offline, cannot afford
-  the price, or the product is disabled/unavailable.
+The permission buy button is disabled
+  The player already owns every node in the product permanently, is offline,
+  cannot afford the price, or the product is disabled/unavailable. Temporary
+  products stay buyable while active so they can be renewed.
+
+A temporary permission expired early or was removed
+  Expiry records live in oxide/data/AdminShop/permissions.json. If an admin
+  grants the same node permanently outside the shop, a later temporary expiry can
+  still revoke the direct permission. Buy the permanent product through the shop
+  (which clears the temporary record) or re-grant the node after expiry.
+
+Cheap items are missing from the shop
+  Items below MinItemPrice (default 500 dukes) are skipped on purpose. Lower
+  MinItemPrice in AdminShop.json and run /adminshop reload. /adminshop catalog
+  shows how many items were skipped.
 
 "Could not grant ... No dukes were taken"
   The node was registered but the grant failed. Check the server log for the
@@ -486,9 +583,10 @@ Buy Permission is disabled
 
 The item catalog is empty
   Check the server log for "[AdminShop] catalog built". If it says 0 items, the
-  item economic values may not have loaded yet. Run /adminshop reload after the
-  world is fully started. Also check MinEconomicValue and the include filters.
-  Permission products still work when the item catalog is empty.
+  item economic values may not have loaded yet, or MinItemPrice may be too high.
+  Run /adminshop reload after the world is fully started. Also check
+  MinEconomicValue, MinItemPrice and the include filters. Permission products
+  still work when the item catalog is empty.
 
 Not enough dukes
   Dukes must be in the player's toolbelt or backpack. The shop does not read

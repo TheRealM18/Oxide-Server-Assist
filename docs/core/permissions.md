@@ -88,7 +88,7 @@ This means:
 - PermissionGui shows all registered nodes, including the other plugin's nodes.
 - Permission rows use three category icons: `sa_nav_server` for `oxide.*`, `sa_nav_world` for `7daystodie.*` / `game.*`, and `sa_plugin_hot_reload` for every other plugin node.
 - Both 7 Days to Die command types use `sa_nav_world`: SdtdConsole commands and `serveradmin.xml` command permissions.
-- These three sprites ship in `AAZ_ServerAssistArt` 1.1.0 or newer. The 1.1.1 pack also provides `sa_perm_oxide`, `sa_perm_game` and `sa_perm_plugin` aliases.
+- These three sprites ship in `AAZ_ServerAssistArt` (current pack 1.3.0; available since 1.1.0). The 1.1.1+ packs also provide `sa_perm_oxide`, `sa_perm_game` and `sa_perm_plugin` aliases.
 - PermissionGui's home and sub-menu rows use the matching nav/action art. Server Assist 2.1 also supports optional icons and tints on action buttons; companions that supply them get icon-and-label buttons.
 
 ---
@@ -268,9 +268,12 @@ voteskip.use
 auctionhouse.use
 dailyrewards.use
 pluginhotreload.use
+media.use
 twitch.use
 buggeecore.use
 playerprofiles.use
+sentinelac.admin
+sentinelac.alerts
 ```
 
 `serverassist.admin` is powerful: it allows shared button management and sees every shared button. Grant it only to staff who should author the board.
@@ -330,6 +333,17 @@ playerprofiles.admin            MaxSlots, Reload and /profile reload
 ```
 
 Reducing a slot permission never deletes existing profiles; it only blocks creating new ones until the player is under the limit. These nodes belong to PlayerProfiles, not to Server Assist. See [PlayerProfiles](../plugins/player/player-profiles.md).
+
+### SentinelAC
+
+```text
+sentinelac.admin     use /ac commands and open the Server Assist provider
+sentinelac.alerts    receive in-game risk alerts
+sentinelac.exempt    never accumulate risk or trigger an automatic action
+sentinelac.use       registered for future player-facing features; unused in 1.0.2
+```
+
+These nodes belong to SentinelAC. Admins are exempt by default, and the administrator group receives `sentinelac.admin` and `sentinelac.alerts` on first load. See [Sentinel AC](../plugins/administration/sentinel-ac.md).
 
 ---
 

@@ -1,0 +1,40 @@
+[Unit]
+Description=Media Relay for 7 Days to Die
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=sdtd
+Group=sdtd
+WorkingDirectory=/opt/mediarelay
+ExecStart=/opt/mediarelay/MediaRelay
+Restart=always
+RestartSec=5
+Environment=MEDIA_RELAY_CONFIG=/opt/mediarelay/relay.json
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+ProtectClock=true
+ProtectHostname=true
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+RestrictNamespaces=true
+RestrictRealtime=true
+RestrictSUIDSGID=true
+LockPersonality=true
+MemoryDenyWriteExecute=true
+SystemCallFilter=@system-service
+SystemCallErrorNumber=EPERM
+CapabilityBoundingSet=
+UMask=0077
+ReadWritePaths=/opt/mediarelay/data /opt/mediarelay/relay.json
+LimitNOFILE=65536
+TasksMax=512
+
+[Install]
+WantedBy=multi-user.target

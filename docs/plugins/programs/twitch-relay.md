@@ -2,6 +2,9 @@
 
 > **Version:** 0.1.1 · **Type:** standalone .NET 8 ASP.NET Core service · **Source:** [TwitchIntegration/relay](https://github.com/TheRealM18/Oxide-Server-Assist/tree/main/TwitchIntegration/relay)
 
+!!! note "Legacy service"
+    TwitchRelay belongs to the Twitch-only `TwitchIntegration` plugin. The platform-neutral successor is [MediaRelay](media-relay.md) with [Media Integration](../utilities/media-integration.md). Do not run both integrations against the same relay.
+
 TwitchRelay is the standalone service behind the Server Assist **Twitch** panel.
 It holds the Twitch application secret and OAuth tokens, maintains one Twitch
 EventSub WebSocket, normalizes events, and queues them per game server. The

@@ -28,8 +28,10 @@ The docs include a full reference page for every bundled plugin, client mod, pro
 | `DynamicBackpack` | Oxide plugin |
 | `PermissionGui` | Oxide plugin |
 | `PlayerProfiles` | Oxide plugin |
+| `SentinelAC` | Oxide plugin |
+| `MediaIntegration` | Oxide plugin + relay |
 | `PluginHotReload` | Oxide plugin |
-| `TwitchIntegration` | Oxide plugin + relay |
+| `TwitchIntegration` | Legacy Oxide plugin + relay |
 | `VoteSkipNight` | Oxide plugin |
 | `QLNPackBootstrap` | Client mod |
 | `QLNPackServer` | Program |

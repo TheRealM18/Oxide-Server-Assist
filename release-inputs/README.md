@@ -11,6 +11,7 @@ release-inputs/
 │   └── QLNPackBootstrap/      QLNPackBootstrap.dll, QLNPackUpdater.exe, config files
 └── programs/
     ├── QLNPackServer/         QLNPackServer.exe, QLNPackServer.json
+    ├── MediaRelay/            one folder per runtime, e.g. linux-x64/ and win-x64/
     ├── TwitchRelay/           one folder per runtime, e.g. win-x64/ and linux-x64/
     └── QLNPackUpdater/        optional standalone updater files
 ```

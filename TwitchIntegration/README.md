@@ -1,5 +1,11 @@
 # Twitch Integration for 7 Days to Die
 
+> **Naming note:** this folder is the working Twitch-only implementation. The
+> platform-neutral successor design is in `../MediaIntegration/`. That design
+> covers Twitch, YouTube, Kick, Trovo, CHZZK, SOOP, VK Play, Bilibili, TikTok,
+> Restream, StreamElements, Streamlabs, Ko-fi, Patreon, custom webhooks, and the
+> migration path from `TwitchIntegration` to `MediaIntegration`.
+
 A Server Assist panel plus a standalone Twitch relay that lets a streamer:
 
 - link their Twitch channel to their server character without ever sharing a stream key,

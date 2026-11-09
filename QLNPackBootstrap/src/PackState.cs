@@ -9,6 +9,7 @@ namespace QLNPackBootstrap
     internal sealed class PackState
     {
         public string PackVersion = "";
+        public string ActivePackId = "";
         public string InstalledAt = "";
         public List<InstalledMod> Mods = new List<InstalledMod>();
 
@@ -31,6 +32,7 @@ namespace QLNPackBootstrap
                 }
 
                 state.PackVersion = ReadElement(root, "PackVersion");
+                state.ActivePackId = ReadElement(root, "ActivePackId");
                 state.InstalledAt = ReadElement(root, "InstalledAt");
 
                 XmlNode modsNode = root.SelectSingleNode("Mods");
@@ -70,6 +72,7 @@ namespace QLNPackBootstrap
             document.AppendChild(root);
 
             AppendElement(document, root, "PackVersion", PackVersion ?? "");
+            AppendElement(document, root, "ActivePackId", ActivePackId ?? "");
             AppendElement(document, root, "InstalledAt", InstalledAt ?? DateTime.UtcNow.ToString("o"));
 
             XmlElement mods = document.CreateElement("Mods");

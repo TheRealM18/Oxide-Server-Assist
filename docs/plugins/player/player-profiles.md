@@ -36,8 +36,8 @@ Character appearance is not changed by an in-place switch. On a reconnect it fol
 |---|---|
 | Game | 7 Days to Die V3.4, built against the 3.4 managed assemblies |
 | Server | Oxide / uMod |
-| Server Assist plugin | 2.1.0 or newer on the server |
-| Server Assist client mod | 2.1.0 or newer on every client that should switch |
+| Server Assist plugin | 2.1.0 or newer on the server; the companion-protocol minimum is 2.0.1 |
+| Server Assist client mod | 2.1.0 or newer on every client that should switch; the companion-protocol minimum is 2.0.1 |
 | In-place switching | Server Assist plugin and `ServerAssistMod` builds with the companion protocol (current 2.1.x builds) |
 | EAC | Off |
 | Art | Optional `ServerAssistArt` UI atlas for the `sa_profile_*` panel icons |
@@ -165,7 +165,7 @@ File: `oxide/config/PlayerProfiles.json`
 | `ChunkBytes` | `24576` | Profile payload chunk size; clamped to 4096–65536 |
 | `BackupCount` | `2` | Rotating backups per profile file; clamped to 0–2 |
 | `ArchiveDeletedProfiles` | `true` | Copy deleted payloads to `deleted/` before removing them |
-| `RequireSameModSet` | `true` | Refuse to switch to a profile saved with a different mod set |
+| `ModCompatibility` | `Additive` | Mod compatibility mode. `Strict`: exact mod-set hash, the old `RequireSameModSet` behaviour. `Additive`: allow new mods that only append items; block mods that shift, remove or rename existing item IDs. `Ignore`: skip the check. See [Adding mods later](#adding-mods-later) |
 | `RequireSameGameVersion` | `false` | Refuse to switch across game versions. 7DTD can usually read older files |
 | `Debug` | `false` | Extra log lines for captures and switches |
 
@@ -189,7 +189,7 @@ The `.ttp` files use the game's own save container:
 
 The game's `ItemStack` format is used, so quality, durability, ammo, mods, cosmetic slots and other item data survive automatically.
 
-`state.json` holds profile names, IDs, active profile, pending switch, metadata such as level, deaths, playtime, bytes, saved time, game version and mod-set hash, and the player name. It does not hold permissions.
+`state.json` holds profile names, IDs, active profile, pending switch, metadata such as level, deaths, playtime, bytes, saved time, game version, mod-set hash, item count and item-map hash, and the player name. It does not hold permissions.
 
 !!! warning
     The plugin never edits the live vanilla `.ttp` in place. It writes a temporary file and replaces the target atomically. The vanilla save is the fallback copy.
@@ -254,12 +254,14 @@ Server-to-client responses do not carry the panel id:
 
 ```text
 @pp|prepare|token|fromName|toName
-@pp|begin|token|chunks|sha256|bytes|chunkBytes
+@pp|begin|token|chunks|sha256|bytes|chunkBytes[|itemCount|itemMapHash]
 @pp|chunk|token|index|base64
 @pp|done|token
 @pp|abort|token|reason
 @pp|ok
 ```
+
+`@pp|begin` may carry the trailing `|itemCount|itemMapHash` fields after `chunkBytes` when the target profile has item-map metadata. The current client validates the received prefix against its own item-map prefix and aborts the switch with an item-layout error when it does not match.
 
 Server Assist strips the panel id and passes the hook `@pp|<protocol body>`. A handler response that starts with `@pp|` is returned verbatim; Server Assist does not append hook chrome, `tab=hook`, `background=` or `banner=` to it. The routing branch must run before the normal `a|` / `t|` dispatcher, and the companion handler performs its own permission check.
 
@@ -289,6 +291,11 @@ Server Assist strips the panel id and passes the hook `@pp|<protocol body>`. A h
 3. On any failure the old profile is kept. A partially applied client is kicked back to a reconnect so both sides resync.
 
 The client locks `countdownSendPlayerDataFileToServer` and `countdownSendPlayerInventoryToServer`, suppresses outgoing sync until commit, closes cursor windows, clears old buffs, waypoints, owned entities, spawn point, recipes and the quest journal before applying, and applies the payload with `StreamModeRead.Persistency`. It stays frozen until `@pp|done` or a 10-second fallback.
+
+Both the client and the server call `ResetProgressionToMin` before applying the payload. Every known progression value is reset to its class minimum first, so progression entries added by a new mod do not leak from the old profile. The profile's own progression values then overwrite those minimums.
+
+!!! note
+    `@pp|begin` includes the item-map fingerprint so the client can refuse a payload that would map item IDs to the wrong definitions. A mismatch aborts the switch before the client applies anything.
 
 ### Reconnect fallback
 
@@ -327,6 +334,39 @@ The bridge probes for `RouteCompanionProtocol` by name. If the method is absent,
 | Newer profile file | Materialised over the vanilla `.ttp` before spawn |
 | Interrupted in-place switch | Marked pending. On the next login the server reverts to the profile the player came from, so a half-applied switch cannot become the active character |
 | Unreadable profile | Falls back to `.bak1` / `.bak2`; a corrupt vanilla save is never allowed to lock a player out |
+
+---
+
+## Adding mods later
+
+Each profile stores an item-map fingerprint in `state.json`: the number of item entries at save time and a hash of their names in ID order. `ModCompatibility` controls how a switch compares that fingerprint with the item table loaded on the server.
+
+| Mode | Behaviour |
+|---|---|
+| `Strict` | Requires the exact mod-set hash. This is the old `RequireSameModSet` behaviour |
+| `Additive` (default) | Allows new mods that only append items. Blocks mods that shift, remove or rename existing item IDs |
+| `Ignore` | Skips the check entirely. Risky; back up `oxide/data/PlayerProfiles` first |
+
+!!! danger
+    `Ignore` does not repair items that were already mis-mapped. Back up `oxide/data/PlayerProfiles` and the world player `.ttp` files before using it. If item IDs already point at the wrong definitions, restore a profile backup or delete the affected profile.
+
+Safe and unsafe changes:
+
+- **Safe:** a new mod that only appends items and loads after the existing item mods.
+- **Unsafe:** a mod that inserts items before existing mods, removes items, or renames existing items. Old IDs then point at different items.
+
+Workflow:
+
+1. Back up `oxide/data/PlayerProfiles` and the world player `.ttp` files.
+2. Stop the server.
+3. Add the mod.
+4. If it adds items, make its folder sort after the existing item mods. 7DTD loads mods by folder name; a `ZZ_` prefix is a simple way to load last.
+5. Start the server. The active profile loads with the new item table. If the new mod is not additive, the active character can still be mis-mapped; only a backup can recover that.
+6. Switch to another profile. Additive mode compares the stored item map: a matching prefix allows the switch with no wipe; a differing prefix blocks it with the item-ID error. Reorder the new mod, or set `ModCompatibility` to `Ignore` after a backup.
+7. The profile's item map is refreshed on the next save or switch.
+
+!!! note
+    Profiles created before item-map metadata existed have no stored item map. Additive mode allows them once with a warning and records the current map on the next save. Strict mode still blocks them by mod-set hash.
 
 ---
 
@@ -393,7 +433,9 @@ To store per-profile data in another plugin, key it by `GetProfileScopedId` inst
 | The card opens but says "reconnect required" for every switch | The server plugin, client mod or both are older than the companion-protocol build. Install the current Server Assist plugin and `ServerAssistMod` on the server and client. Switches still work, but they reconnect |
 | `Your current profile could not be saved.` | The server could not read the live `PlayerDataFile`. Check the log for capture errors. The switch is cancelled so no progress is lost |
 | `That profile is dead. Reconnect to respawn it.` | A dead profile cannot be applied in place. Select it and use the reconnect path, or let it respawn |
-| `That profile was saved with a different mod set.` | Item IDs are load-order integers. Restore the original mod set, or set `RequireSameModSet` to `false` if you understand the risk |
+| `The current mods change existing item IDs, not just add new items.` | A newly added item mod inserted, removed or renamed items ahead of the existing item mods, so old IDs no longer point at the same items. Reorder or rename the new mod folder so it loads after the existing item mods (for example prefix it with `ZZ_`), or set `ModCompatibility` to `Ignore` after backing up `oxide/data/PlayerProfiles`. `Ignore` cannot repair items that are already mis-mapped |
+| `That profile was saved with a different mod set.` | This is the `Strict` mode message. Set `ModCompatibility` to `Additive` to allow new mods that only append items, or restore the exact mod set |
+| `Your client's item layout does not match this profile. Install the same mods as the server.` | The client's item-map prefix differs from the profile's. Install the same item mods in the same load order on the client, or switch to a profile that matches the client |
 | A new profile reset to level 1 | Expected when `NewProfileStartsFresh` is true. Set it to `false` if new profiles should copy the current character |
 | The quest tracker or inventory looked stale for a moment | The client closes cursor windows and rebuilds the quest tracker, toolbelt, backpack and equipment. Reopen any window that was open during the switch |
 | Vehicles moved or ownership changed | Owned entities are stored per profile and replaced on switch. World vehicles remain world objects. Exit vehicles before switching. Land claims and allies never switch |

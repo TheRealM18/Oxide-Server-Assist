@@ -47,6 +47,42 @@
 
   <ShowCheckErrors>true</ShowCheckErrors>
 
+  <!--
+    Optional remote pack index. It must return JSON:
+      { "packs": [
+          { "id": "qln", "name": "QLN Server",
+            "manifestUrl": "https://...", "gameVersion": "3.4" }
+      ] }
+    Local <Packs> entries win over remote entries with the same id.
+  -->
+  <PackIndexUrl></PackIndexUrl>
+
+  <!--
+    Pack selected on first run. Leave empty to use the first local pack,
+    or Vanilla when no packs are configured.
+  -->
+  <DefaultPackId></DefaultPackId>
+  <DefaultPackName>QLN Server</DefaultPackName>
+
+  <!--
+    Optional local pack list. If omitted, ManifestUrl above becomes the
+    default pack and Vanilla is added automatically.
+
+    <Packs>
+      <Pack>
+        <Id>qln</Id>
+        <Name>QLN Server</Name>
+        <ManifestUrl>https://drive.google.com/file/d/FILE_ID/view?usp=sharing</ManifestUrl>
+        <GameVersion>3.4</GameVersion>
+      </Pack>
+      <Pack>
+        <Id>other</Id>
+        <Name>Other Server</Name>
+        <ManifestUrl>https://example.com/other/manifest.json</ManifestUrl>
+      </Pack>
+    </Packs>
+  -->
+
   <KeepBackups>3</KeepBackups>
   <MaxModBytes>2147483648</MaxModBytes>
   <MaxTotalBytes>8589934592</MaxTotalBytes>

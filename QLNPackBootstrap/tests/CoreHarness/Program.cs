@@ -28,6 +28,8 @@ namespace CoreHarness
                 TestModsRoot();
                 TestValidation();
                 TestChanges();
+                TestPackProfiles();
+                TestPackSwitch();
                 TestZipExtraction();
                 TestFindModRoot();
                 TestStagePending();
@@ -404,6 +406,123 @@ namespace CoreHarness
                     !PackSignature.Verify(tampered, signature, publicKey, out error),
                     "should reject");
             }
+        }
+
+        private static void TestPackProfiles()
+        {
+            File.WriteAllText(
+                PackPaths.ConfigFile,
+                "<PackBootstrap>" +
+                "<ManifestUrl>https://github.com/OWNER/REPO/releases/latest/download/manifest.json</ManifestUrl>" +
+                "</PackBootstrap>",
+                new UTF8Encoding(false));
+
+            PackConfig legacy = PackConfig.Load(PackPaths.ConfigFile);
+            Check("legacy pack profile", legacy.Packs.Count == 2, "expected vanilla + default");
+            Check("legacy default id", legacy.DefaultPackId == "default", legacy.DefaultPackId);
+            Check("legacy vanilla", legacy.FindPack("vanilla") != null && legacy.FindPack("vanilla").IsVanilla, "missing vanilla");
+
+            File.WriteAllText(
+                PackPaths.ConfigFile,
+                "<PackBootstrap>" +
+                "<DefaultPackId>qln</DefaultPackId>" +
+                "<Packs>" +
+                "<Pack><Id>qln</Id><Name>QLN</Name><ManifestUrl>https://example.com/qln.json</ManifestUrl></Pack>" +
+                "<Pack><Id>other</Id><Name>Other</Name><ManifestUrl>https://example.com/other.json</ManifestUrl></Pack>" +
+                "</Packs>" +
+                "</PackBootstrap>",
+                new UTF8Encoding(false));
+
+            PackConfig multi = PackConfig.Load(PackPaths.ConfigFile);
+            Check("multi pack count", multi.Packs.Count == 3, "expected vanilla + two packs");
+            Check("multi pack default", multi.DefaultPackId == "qln", multi.DefaultPackId);
+            Check("multi pack names",
+                multi.FindPack("qln") != null && multi.FindPack("qln").Name == "QLN" &&
+                multi.FindPack("other") != null,
+                "profiles missing");
+
+            File.Delete(PackPaths.ConfigFile);
+        }
+
+        private static void TestPackSwitch()
+        {
+            PackConfig config = NewConfig();
+            config.DefaultPackId = "packA";
+
+            string packA = PackInstaller.GetTargetPath("PackAMod");
+            string shared = PackInstaller.GetTargetPath("SharedMod");
+            Directory.CreateDirectory(packA);
+            Directory.CreateDirectory(shared);
+            File.WriteAllText(Path.Combine(packA, "Config.xml"), "<xml />");
+            File.WriteAllText(Path.Combine(shared, "Config.xml"), "<xml />");
+
+            PackState state = new PackState
+            {
+                PackVersion = "1.0.0",
+                ActivePackId = "packA",
+                Mods = new List<InstalledMod>
+                {
+                    new InstalledMod { Folder = "PackAMod", Version = "1.0.0", Sha256 = new string('a', 64) },
+                    new InstalledMod { Folder = "SharedMod", Version = "1.0.0", Sha256 = new string('b', 64) }
+                }
+            };
+
+            PackManifest target = new PackManifest
+            {
+                PackVersion = "2.0.0",
+                Mods = new List<PackModEntry>
+                {
+                    new PackModEntry
+                    {
+                        Name = "SharedMod",
+                        Version = "1.0.0",
+                        Sha256 = new string('b', 64),
+                        Size = 10,
+                        InstallFolder = "SharedMod"
+                    },
+                    new PackModEntry
+                    {
+                        Name = "PackBMod",
+                        Version = "1.0.0",
+                        Sha256 = new string('c', 64),
+                        Size = 10,
+                        InstallFolder = "PackBMod"
+                    }
+                }
+            };
+
+            string error;
+            List<ModChange> changes = PackInstaller.ComputeChanges(target, state, config, "packB", out error);
+            int removes = changes == null ? -1 : changes.Count(change => change.Kind == ModChangeKind.Remove);
+            int adds = changes == null ? -1 : changes.Count(change => change.Kind != ModChangeKind.Remove);
+            Check("pack switch changes", changes != null && removes == 1 && adds == 1, error);
+            Check("pack switch removes old",
+                changes != null && changes.Any(change => change.Kind == ModChangeKind.Remove && change.Folder == "PackAMod"),
+                "PackAMod should be removed");
+            Check("pack switch keeps shared",
+                changes != null && !changes.Any(change => change.Folder == "SharedMod"),
+                "SharedMod should be kept");
+
+            changes = PackInstaller.ComputeChanges(null, state, config, "vanilla", out error);
+            Check("vanilla removes managed mods",
+                changes != null && changes.Count(change => change.Kind == ModChangeKind.Remove) == 2,
+                error);
+
+            string stageRoot = Path.Combine(PackPaths.StagingDir, "vanilla-test");
+            Directory.CreateDirectory(stageRoot);
+            PackPending pending = null;
+            bool staged = changes != null &&
+                          PackInstaller.StagePending(null, changes, stageRoot, config, "vanilla", out pending, out error);
+            Check("vanilla stage active pack",
+                staged && pending != null && pending.ActivePackId == "vanilla" &&
+                pending.Apply.Count == 0 && pending.Remove.Count == 2,
+                error);
+
+            try { File.Delete(PackPaths.PendingFile); } catch { }
+
+            try { Directory.Delete(packA, true); } catch { }
+            try { Directory.Delete(shared, true); } catch { }
+            try { Directory.Delete(stageRoot, true); } catch { }
         }
 
         private static PackConfig NewConfig()

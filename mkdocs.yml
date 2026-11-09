@@ -73,6 +73,7 @@ nav:
           - PermissionGui: plugins/administration/permission-gui.md
           - AdminSuite: plugins/administration/admin-suite.md
           - AdminKits: plugins/administration/admin-kits.md
+          - Sentinel AC: plugins/administration/sentinel-ac.md
       - Economy:
           - Overview: plugins/economy/index.md
           - Admin Shop: plugins/economy/admin-shop.md
@@ -86,6 +87,7 @@ nav:
       - Server utilities:
           - Overview: plugins/utilities/index.md
           - Plugin Hot Reload: plugins/utilities/plugin-hot-reload.md
+          - Media Integration: plugins/utilities/media-integration.md
           - Twitch Integration: plugins/utilities/twitch-integration.md
           - BuggeeNet: plugins/utilities/buggee-net.md
       - Client mods:
@@ -95,6 +97,7 @@ nav:
       - Programs:
           - Overview: plugins/programs/index.md
           - QLN Pack Server: plugins/programs/qln-pack-server.md
+          - MediaRelay: plugins/programs/media-relay.md
           - TwitchRelay: plugins/programs/twitch-relay.md
       - Art and assets:
           - Overview: plugins/art/index.md

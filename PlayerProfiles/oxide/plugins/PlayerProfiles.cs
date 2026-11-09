@@ -50,6 +50,9 @@ namespace Oxide.Plugins
             new Dictionary<string, DateTime>(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, int> slotsCache =
             new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+        private static readonly Dictionary<int, string> itemPrefixCache = new Dictionary<int, string>();
+        private static int cachedItemCount;
+        private static string cachedItemHash;
 
         private Timer tickTimer;
         private Plugin serverAssist;
@@ -81,8 +84,16 @@ namespace Oxide.Plugins
 
         private void OnServerInitialized()
         {
+            ClearItemMapCache();
             EnsureDefaultPermissions();
             RegisterServerAssistPanel();
+        }
+
+        private static void ClearItemMapCache()
+        {
+            cachedItemCount = 0;
+            cachedItemHash = null;
+            itemPrefixCache.Clear();
         }
 
         private void OnServerAssistReady()
@@ -557,6 +568,13 @@ namespace Oxide.Plugins
                 }
             }
 
+            if (active.ItemCount > 0 &&
+                !ItemMapPrefixMatches(active.ItemMapHash, active.ItemCount))
+            {
+                LogWarning("active profile '" + active.Name + "' was saved with a different item ID layout. " +
+                           "The new mods may mis-map items. Restore a profile backup, or reorder the new item mod so it loads last.");
+            }
+
             string vanilla = VanillaPath(clientInfo);
             bool vanillaExists = File.Exists(vanilla);
             byte[] profilePayload = ReadProfileBytes(state.PlayerId, active.Id);
@@ -829,6 +847,7 @@ namespace Oxide.Plugins
             {
                 ClearServerPlayerState(entity);
                 PrepareForImport(pdf, entity);
+                ResetProgressionToMin(entity);
 
                 pdf.ToPlayer(entity, StreamModeRead.Persistency);
                 entity.SetPosition(pdf.ecd.pos, true);
@@ -943,6 +962,35 @@ namespace Oxide.Plugins
             catch (Exception exception)
             {
                 LogWarning("server quest cleanup failed: " + exception.Message);
+            }
+        }
+
+        private static void ResetProgressionToMin(EntityPlayer entity)
+        {
+            try
+            {
+                Progression progression = entity != null ? entity.Progression : null;
+                if (progression == null ||
+                    progression.ProgressionValues == null ||
+                    progression.ProgressionValues.Dict == null)
+                {
+                    return;
+                }
+
+                foreach (ProgressionValue value in progression.ProgressionValues.Dict.Values)
+                {
+                    if (value != null && value.ProgressionClass != null)
+                    {
+                        // Values present in the profile are overwritten by
+                        // Progression.Read. Values added by a new mod stay at
+                        // their minimum instead of leaking from the old profile.
+                        value.Level = value.ProgressionClass.MinLevel;
+                    }
+                }
+            }
+            catch (Exception exception)
+            {
+                Interface.Oxide.LogWarning("[PlayerProfiles] progression reset failed: " + exception.Message);
             }
         }
 
@@ -1561,8 +1609,25 @@ namespace Oxide.Plugins
             live.ChunkBytes = Math.Max(1024, config.ChunkBytes);
             live.ChunkCount = (live.TargetPayload.Length + live.ChunkBytes - 1) / live.ChunkBytes;
 
+            int itemCount = live.ItemCount;
+            string itemHash = live.ItemMapHash;
+            if (string.Equals(config.ModCompatibility, "Ignore", StringComparison.OrdinalIgnoreCase) ||
+                itemCount <= 0 ||
+                string.IsNullOrEmpty(itemHash))
+            {
+                // Ignore mode deliberately allows a shifted profile. Legacy
+                // profiles have no stored map. In both cases, at least make the
+                // client verify that its item table matches this server's.
+                TryGetItemMap(out itemCount, out itemHash);
+            }
+
+            string itemSuffix = itemCount > 0 && !string.IsNullOrEmpty(itemHash)
+                ? "|" + itemCount + "|" + itemHash
+                : string.Empty;
+
             return ProtocolPrefix + "begin|" + token + "|" + live.ChunkCount + "|" +
-                   live.TargetHash + "|" + live.TargetPayload.Length + "|" + live.ChunkBytes;
+                   live.TargetHash + "|" + live.TargetPayload.Length + "|" + live.ChunkBytes +
+                   itemSuffix;
         }
 
         private bool PrepareLiveTarget(
@@ -2014,20 +2079,8 @@ namespace Oxide.Plugins
 
             if (entry.HasData)
             {
-                if (config.RequireSameGameVersion &&
-                    !string.IsNullOrEmpty(entry.GameVersion) &&
-                    !string.Equals(entry.GameVersion, gameVersion, StringComparison.OrdinalIgnoreCase))
+                if (!IsProfileCompatible(entry, out error))
                 {
-                    error = "That profile was saved on game " + entry.GameVersion +
-                            " and this server is on " + gameVersion + ".";
-                    return false;
-                }
-
-                if (config.RequireSameModSet &&
-                    !string.IsNullOrEmpty(entry.ModHash) &&
-                    !string.Equals(entry.ModHash, modHash, StringComparison.OrdinalIgnoreCase))
-                {
-                    error = "That profile was saved with a different mod set. Restore the mods before switching to it.";
                     return false;
                 }
 
@@ -2062,7 +2115,9 @@ namespace Oxide.Plugins
                         ? FindProfile(state, state.ActiveProfileId).Name
                         : "current",
                     ToName = entry.Name,
-                    StartedUtc = DateTime.UtcNow
+                    StartedUtc = DateTime.UtcNow,
+                    ItemCount = entry.ItemCount,
+                    ItemMapHash = entry.ItemMapHash
                 };
 
                 liveSwitches[player.Id] = live;
@@ -3302,6 +3357,7 @@ namespace Oxide.Plugins
             entry.SavedAtUtc = IsoNow();
             entry.GameVersion = gameVersion;
             entry.ModHash = modHash;
+            UpdateItemMapMetadata(entry);
 
             // The server entity's progression can lag behind the client's
             // latest full sync. The captured progression blob is authoritative.
@@ -3323,6 +3379,231 @@ namespace Oxide.Plugins
             {
                 entry.CreatedUtc = IsoNow();
             }
+        }
+
+        private static void UpdateItemMapMetadata(PlayerProfileEntry entry)
+        {
+            if (entry == null)
+            {
+                return;
+            }
+
+            int count;
+            string hash;
+            if (!TryGetItemMap(out count, out hash))
+            {
+                return;
+            }
+
+            entry.ItemCount = count;
+            entry.ItemMapHash = hash;
+        }
+
+        private static bool TryGetItemMap(out int count, out string hash)
+        {
+            count = 0;
+            hash = null;
+
+            try
+            {
+                ItemClass[] items = ItemClass.list;
+                if (items == null || items.Length == 0)
+                {
+                    return false;
+                }
+
+                count = items.Length;
+                if (cachedItemCount == count && !string.IsNullOrEmpty(cachedItemHash))
+                {
+                    hash = cachedItemHash;
+                    return true;
+                }
+
+                if (cachedItemCount != 0 && cachedItemCount != count)
+                {
+                    itemPrefixCache.Clear();
+                }
+
+                hash = HashItemPrefixUncached(count);
+                if (string.IsNullOrEmpty(hash))
+                {
+                    return false;
+                }
+
+                cachedItemCount = count;
+                cachedItemHash = hash;
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        private static string HashItemPrefix(int count)
+        {
+            try
+            {
+                ItemClass[] items = ItemClass.list;
+                if (items == null || count <= 0)
+                {
+                    return string.Empty;
+                }
+
+                if (cachedItemCount == items.Length &&
+                    count == cachedItemCount &&
+                    !string.IsNullOrEmpty(cachedItemHash))
+                {
+                    return cachedItemHash;
+                }
+
+                if (cachedItemCount != 0 && cachedItemCount != items.Length)
+                {
+                    itemPrefixCache.Clear();
+                }
+
+                string cached;
+                if (itemPrefixCache.TryGetValue(count, out cached))
+                {
+                    return cached;
+                }
+
+                string hash = HashItemPrefixUncached(count);
+                if (!string.IsNullOrEmpty(hash))
+                {
+                    itemPrefixCache[count] = hash;
+                }
+
+                return hash;
+            }
+            catch
+            {
+                return string.Empty;
+            }
+        }
+
+        private static string HashItemPrefixUncached(int count)
+        {
+            try
+            {
+                ItemClass[] items = ItemClass.list;
+                if (items == null || count <= 0)
+                {
+                    return string.Empty;
+                }
+
+                unchecked
+                {
+                    const ulong offset = 14695981039346656037UL;
+                    const ulong prime = 1099511628211UL;
+
+                    ulong hash = offset;
+                    int limit = Math.Min(count, items.Length);
+                    for (int i = 0; i < limit; i++)
+                    {
+                        ItemClass item = items[i];
+                        string name = item != null ? item.GetItemName() : string.Empty;
+                        byte[] bytes = Encoding.UTF8.GetBytes(name ?? string.Empty);
+                        for (int j = 0; j < bytes.Length; j++)
+                        {
+                            hash ^= bytes[j];
+                            hash *= prime;
+                        }
+
+                        // Separator so ["ab","c"] and ["a","bc"] differ.
+                        hash ^= 0xFF;
+                        hash *= prime;
+                    }
+
+                    return hash.ToString("x16");
+                }
+            }
+            catch
+            {
+                return string.Empty;
+            }
+        }
+
+        private static bool ItemMapPrefixMatches(string expectedHash, int expectedCount)
+        {
+            if (expectedCount <= 0 || string.IsNullOrEmpty(expectedHash))
+            {
+                return true;
+            }
+
+            ItemClass[] items = ItemClass.list;
+            if (items == null || items.Length < expectedCount)
+            {
+                return false;
+            }
+
+            string current = HashItemPrefix(expectedCount);
+            return !string.IsNullOrEmpty(current) &&
+                   string.Equals(current, expectedHash, StringComparison.OrdinalIgnoreCase);
+        }
+
+        /// <summary>
+        /// A profile created before item-map metadata existed cannot be checked.
+        /// Additive mode allows it once, then the next capture records the map.
+        /// Strict mode still compares the old mod hash.
+        /// </summary>
+        private bool IsProfileCompatible(PlayerProfileEntry entry, out string error)
+        {
+            error = null;
+
+            if (entry == null)
+            {
+                error = "That profile does not exist.";
+                return false;
+            }
+
+            if (config.RequireSameGameVersion &&
+                !string.IsNullOrEmpty(entry.GameVersion) &&
+                !string.Equals(entry.GameVersion, gameVersion, StringComparison.OrdinalIgnoreCase))
+            {
+                error = "That profile was saved on game " + entry.GameVersion +
+                        " and this server is on " + gameVersion + ".";
+                return false;
+            }
+
+            string mode = config.ModCompatibility ?? "Additive";
+            if (string.Equals(mode, "Ignore", StringComparison.OrdinalIgnoreCase))
+            {
+                LogDebug("mod compatibility is Ignore for '" + entry.Name + "'");
+                return true;
+            }
+
+            if (string.Equals(mode, "Strict", StringComparison.OrdinalIgnoreCase))
+            {
+                if (!string.IsNullOrEmpty(entry.ModHash) &&
+                    !string.Equals(entry.ModHash, modHash, StringComparison.OrdinalIgnoreCase))
+                {
+                    error = "That profile was saved with a different mod set. Restore the exact mods, or set ModCompatibility to Additive or Ignore.";
+                    return false;
+                }
+
+                return true;
+            }
+
+            // Additive: existing item IDs must still line up. New items may be
+            // appended by a new mod without a wipe.
+            if (entry.ItemCount <= 0 || string.IsNullOrEmpty(entry.ItemMapHash))
+            {
+                LogWarning("legacy profile '" + entry.Name + "' has no item-map metadata; allowing it once. " +
+                           "The next save will record the current item layout.");
+                return true;
+            }
+
+            if (!ItemMapPrefixMatches(entry.ItemMapHash, entry.ItemCount))
+            {
+                error = "The current mods change existing item IDs, not just add new items. " +
+                        "Reorder the new item mod so it loads after the existing item mods, " +
+                        "or set ModCompatibility to Ignore to force the switch (back up the profiles first).";
+                return false;
+            }
+
+            LogDebug("profile '" + entry.Name + "' is item-map compatible");
+            return true;
         }
 
         private static int GetLevelFromPdf(PlayerDataFile pdf)
@@ -3818,6 +4099,22 @@ namespace Oxide.Plugins
             config.ChunkBytes = Clamp(config.ChunkBytes, 4096, 65536);
             config.BackupCount = Clamp(config.BackupCount, 0, 2);
 
+            config.ModCompatibility = (config.ModCompatibility ?? string.Empty).Trim();
+            if (config.ModCompatibility.Equals("strict", StringComparison.OrdinalIgnoreCase))
+            {
+                config.ModCompatibility = "Strict";
+            }
+            else if (config.ModCompatibility.Equals("ignore", StringComparison.OrdinalIgnoreCase) ||
+                     config.ModCompatibility.Equals("any", StringComparison.OrdinalIgnoreCase) ||
+                     config.ModCompatibility.Equals("always", StringComparison.OrdinalIgnoreCase))
+            {
+                config.ModCompatibility = "Ignore";
+            }
+            else
+            {
+                config.ModCompatibility = "Additive";
+            }
+
             if (string.IsNullOrEmpty(config.BootstrapProfileName))
             {
                 config.BootstrapProfileName = "Main";
@@ -4289,6 +4586,8 @@ namespace Oxide.Plugins
             public int ChunkCount;
             public int ChunkBytes;
             public DateTime TimedOutUtc;
+            public int ItemCount;
+            public string ItemMapHash;
         }
 
         #endregion
@@ -4318,8 +4617,9 @@ namespace Oxide.Plugins
         public int ChunkBytes = 24576;
         public int BackupCount = 2;
         public bool ArchiveDeletedProfiles = true;
-        public bool RequireSameModSet = true;
+        public string ModCompatibility = "Additive";
         public bool RequireSameGameVersion = false;
+        public bool RequireSameModSet = false;
         public bool Debug = false;
     }
 
@@ -4350,6 +4650,8 @@ namespace Oxide.Plugins
         public long Bytes;
         public string GameVersion;
         public string ModHash;
+        public int ItemCount;
+        public string ItemMapHash;
     }
 
     public class PlayerProfilesPendingSwitch

@@ -26,6 +26,10 @@ streams, wiki and mod packs without attribution.
 > `REQUESTS_*`, `PLANNED_*`, `ADMINSUITE-*` and `VOTESKIPNIGHT_*` file for this
 > batch. Those are older or optional requests, not current work.
 >
+> **SentinelAC follow-up:** [REQUESTS_SentinelAC.md](REQUESTS_SentinelAC.md)
+> requests 12 `sa_ac_*` icons for the three-tab SentinelAC provider. It is a
+> follow-up batch, not part of the current PlayerProfiles handoff.
+>
 > Plugin Hot Reload already uses the existing `sa_plugin_hot_reload` icon. The
 > older `sa_hotreload_*` request is not active.
 >

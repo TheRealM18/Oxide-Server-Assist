@@ -1,4 +1,4 @@
-# PlayerProfiles - required Server Assist patches
+﻿# PlayerProfiles - required Server Assist patches
 
 Status: implemented and compiled in this workspace, but this file is the
 authoritative handoff for the Server Assist agent. Re-apply or verify these
@@ -198,7 +198,7 @@ ServerAssist/src/PlayerProfilesClient.cs
 SHA-256:
 
 ```text
-5CF4251E872E082F0908D172FA6890CBCDC12594C462EE0EE0E1C6D8393C365C
+1403C456394A2A8225AA55BAD1ACAC7526EEB3ECF8379E8C41CE0EAF62549F3E
 ```
 
 Do not reimplement it by hand. It contains the client half of the handshake,
@@ -451,9 +451,9 @@ workspace it was verified with a temporary `net48` harness that compiles
 Source hashes at the handoff snapshot:
 
 ```text
-PlayerProfiles.cs        D3236E1DA9093241A6EF41D619C48DB3C51497B81258EA5FA670BE0563CF5DC2
+PlayerProfiles.cs        ACE0A42ADC0E3E6EDECA2212FFD114160E0D3D45609169D5209FC27535CD0CFF
 ServerAssist.cs          C2AB8843E4D5D71609B2D13103A237E79E98E47F6891F16B20D8CCE78C7C81FA
-PlayerProfilesClient.cs  5CF4251E872E082F0908D172FA6890CBCDC12594C462EE0EE0E1C6D8393C365C
+PlayerProfilesClient.cs  1403C456394A2A8225AA55BAD1ACAC7526EEB3ECF8379E8C41CE0EAF62549F3E
 ServerAssistClient.cs    05A4BC99D628B291D89C6088FEC742F568ED03FBEB03E822B7B9E882A422F7FD
 ServerAssistBridge.cs    152316CE15C5F64C773114C0A6CEB9549BA107E4B1F82EF02CEC8070F5C6F0CE
 ServerAssistMod.cs       4F364DFC90AB5B18FD3FB84F6D1F0DA22F4F2A3014BD1E23A94BBCC298FD1B7D
@@ -622,3 +622,5 @@ the seamless patches to function.
 - If the Server Assist agent wants to expose a generic companion-protocol API
   later, `@pp|` is reserved for PlayerProfiles; use a different prefix for
   another protocol.
+
+

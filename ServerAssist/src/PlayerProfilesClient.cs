@@ -286,6 +286,21 @@ namespace ServerAssistMod
                 return;
             }
 
+            if (parts.Length > 7)
+            {
+                int expectedItems;
+                if (int.TryParse(parts[6], out expectedItems) &&
+                    expectedItems > 0 &&
+                    !string.IsNullOrEmpty(parts[7]) &&
+                    !ItemMapPrefixMatches(parts[7], expectedItems))
+                {
+                    Finish(false,
+                        "Your client's item layout does not match this profile. Install the same mods as the server.",
+                        true);
+                    return;
+                }
+            }
+
             totalChunks = chunks;
             expectedBytes = bytes;
             chunkBytes = chunkSize;
@@ -426,6 +441,7 @@ namespace ServerAssistMod
                 ClosePlayerWindows(xui, player);
                 mutated = true;
                 ClearOldPlayerState(player);
+                ResetProgressionToMin(player);
 
                 pdf.id = player.entityId;
                 pdf.bLoaded = true;
@@ -547,6 +563,35 @@ namespace ServerAssistMod
             catch (Exception exception)
             {
                 Log.Warning("[PlayerProfiles] could not close open windows: " + exception.Message);
+            }
+        }
+
+        private static void ResetProgressionToMin(EntityPlayerLocal player)
+        {
+            try
+            {
+                Progression progression = player != null ? player.Progression : null;
+                if (progression == null ||
+                    progression.ProgressionValues == null ||
+                    progression.ProgressionValues.Dict == null)
+                {
+                    return;
+                }
+
+                foreach (ProgressionValue value in progression.ProgressionValues.Dict.Values)
+                {
+                    if (value != null && value.ProgressionClass != null)
+                    {
+                        // The profile's own values overwrite these in
+                        // Progression.Read. New values added by a new mod stay
+                        // at minimum instead of leaking from the old profile.
+                        value.Level = value.ProgressionClass.MinLevel;
+                    }
+                }
+            }
+            catch (Exception exception)
+            {
+                Log.Warning("[PlayerProfiles] progression reset failed: " + exception.Message);
             }
         }
 
@@ -975,6 +1020,65 @@ namespace ServerAssistMod
             {
                 Log.Error("[PlayerProfiles] payload parse failed: " + exception);
                 return null;
+            }
+        }
+
+        private static bool ItemMapPrefixMatches(string expectedHash, int expectedCount)
+        {
+            if (expectedCount <= 0 || string.IsNullOrEmpty(expectedHash))
+            {
+                return true;
+            }
+
+            ItemClass[] items = ItemClass.list;
+            if (items == null || items.Length < expectedCount)
+            {
+                return false;
+            }
+
+            string current = HashItemPrefix(expectedCount);
+            return !string.IsNullOrEmpty(current) &&
+                   string.Equals(current, expectedHash, StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static string HashItemPrefix(int count)
+        {
+            try
+            {
+                ItemClass[] items = ItemClass.list;
+                if (items == null || count <= 0)
+                {
+                    return string.Empty;
+                }
+
+                unchecked
+                {
+                    const ulong offset = 14695981039346656037UL;
+                    const ulong prime = 1099511628211UL;
+
+                    ulong hash = offset;
+                    int limit = Math.Min(count, items.Length);
+                    for (int i = 0; i < limit; i++)
+                    {
+                        ItemClass item = items[i];
+                        string name = item != null ? item.GetItemName() : string.Empty;
+                        byte[] bytes = Encoding.UTF8.GetBytes(name ?? string.Empty);
+                        for (int j = 0; j < bytes.Length; j++)
+                        {
+                            hash ^= bytes[j];
+                            hash *= prime;
+                        }
+
+                        hash ^= 0xFF;
+                        hash *= prime;
+                    }
+
+                    return hash.ToString("x16");
+                }
+            }
+            catch
+            {
+                return string.Empty;
             }
         }
 

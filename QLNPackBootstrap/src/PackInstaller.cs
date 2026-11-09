@@ -199,11 +199,40 @@ namespace QLNPackBootstrap
             PackConfig config,
             out string error)
         {
+            return ComputeChanges(manifest, state, config, null, out error);
+        }
+
+        public static List<ModChange> ComputeChanges(
+            PackManifest manifest,
+            PackState state,
+            PackConfig config,
+            string targetPackId,
+            out string error)
+        {
             error = null;
 
             if (state == null)
             {
                 state = new PackState();
+            }
+
+            if (manifest == null)
+            {
+                manifest = new PackManifest
+                {
+                    PackVersion = "vanilla",
+                    GameVersion = config != null ? config.GameVersion : ""
+                };
+            }
+
+            if (manifest.Mods == null)
+            {
+                manifest.Mods = new List<PackModEntry>();
+            }
+
+            if (manifest.Remove == null)
+            {
+                manifest.Remove = new List<string>();
             }
 
             Dictionary<string, InstalledMod> installed = new Dictionary<string, InstalledMod>(StringComparer.OrdinalIgnoreCase);
@@ -280,7 +309,18 @@ namespace QLNPackBootstrap
                 }
             }
 
-            if (config.RemoveObsolete)
+            // Switching to another profile should clean up the previous pack's
+            // managed folders, even when RemoveObsolete is off.
+            string previousPackId = string.IsNullOrEmpty(state.ActivePackId)
+                ? (config != null ? config.DefaultPackId : "")
+                : state.ActivePackId;
+            bool targetVanilla = string.Equals(targetPackId, "vanilla", StringComparison.OrdinalIgnoreCase);
+            bool switching = targetVanilla
+                ? state.Mods.Count > 0
+                : !string.IsNullOrEmpty(targetPackId) &&
+                  !string.Equals(previousPackId, targetPackId, StringComparison.OrdinalIgnoreCase);
+
+            if (config != null && (config.RemoveObsolete || switching))
             {
                 foreach (InstalledMod mod in state.Mods)
                 {
@@ -339,6 +379,18 @@ namespace QLNPackBootstrap
             out PackPending pending,
             out string error)
         {
+            return StagePending(manifest, changes, stageRoot, config, "", out pending, out error);
+        }
+
+        public static bool StagePending(
+            PackManifest manifest,
+            List<ModChange> changes,
+            string stageRoot,
+            PackConfig config,
+            string activePackId,
+            out PackPending pending,
+            out string error)
+        {
             pending = null;
             error = null;
 
@@ -348,9 +400,12 @@ namespace QLNPackBootstrap
                 return false;
             }
 
+            string packVersion = manifest != null ? manifest.PackVersion : "vanilla";
+
             PackPending staged = new PackPending
             {
-                PackVersion = manifest.PackVersion,
+                PackVersion = packVersion,
+                ActivePackId = activePackId ?? "",
                 CreatedAt = DateTime.UtcNow.ToString("o"),
                 StageRoot = stageRoot
             };
@@ -404,7 +459,7 @@ namespace QLNPackBootstrap
             PruneStaging(stageRoot);
 
             pending = staged;
-            PackLogger.Info("Staged pack " + manifest.PackVersion +
+            PackLogger.Info("Staged pack " + packVersion +
                             ": apply=" + staged.Apply.Count + ", remove=" + staged.Remove.Count);
             return true;
         }
@@ -570,6 +625,11 @@ namespace QLNPackBootstrap
 
         public static List<InstalledMod> BuildInstalledList(PackManifest manifest)
         {
+            if (manifest == null || manifest.Mods == null)
+            {
+                return new List<InstalledMod>();
+            }
+
             return manifest.Mods
                 .Where(mod => mod != null && mod.IsClientSide)
                 .Select(mod => new InstalledMod

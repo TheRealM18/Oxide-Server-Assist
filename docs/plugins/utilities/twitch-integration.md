@@ -2,6 +2,12 @@
 
 > **Version:** 0.2.1 · **Type:** Server-side Oxide plugin plus a standalone .NET 8 relay · **Source:** [TwitchIntegration.cs](https://github.com/TheRealM18/Oxide-Server-Assist/blob/main/TwitchIntegration/oxide/plugins/TwitchIntegration.cs)
 
+!!! note "Twitch-only implementation"
+    `TwitchIntegration` is the working Twitch-only implementation and the rollback path. [Media Integration](media-integration.md) is the platform-neutral successor: it keeps the shared tier, loadout, reward, and relay model while adding platform-aware events. This page documents the Twitch-only plugin at version 0.2.1. See [Media Integration](media-integration.md) for its current provider support and migration details.
+
+!!! warning "Do not run both integrations"
+    `TwitchIntegration` and `MediaIntegration` must not run on the same server. Both poll the same relay and can register a Server Assist panel, so running both can duplicate links and apply the same reward twice. Remove one plugin and reload or restart the server before installing the other.
+
 Twitch Integration links a streamer's Twitch channel to their server character, exposes permission tiers, and lets the streamer shortlist buffs, debuffs, and rewards for each tier. When a viewer event fires, the server rolls one effect from each category and applies it.
 
 Bits, subscriptions, gift subs, resubs, channel point redemptions, automatic rewards, raids, follows, and hype trains are supported.
@@ -372,6 +378,33 @@ The panel's **Admin** screen also exposes relay URL/server ID/key editing, Test 
 
 ---
 
+## Moving to Media Integration
+
+[Media Integration](media-integration.md) is the successor plugin. It renames the plugin, config, and data paths, moves commands from `/twitch` to `/media`, and moves permissions from `twitch.*` to `media.*`. Existing links, loadouts, cooldowns, and pending effects are imported on first load.
+
+### Migrate
+
+1. Back up `oxide/config/TwitchIntegration.json` and `oxide/data/TwitchIntegration/players.json`.
+2. Stop the server.
+3. Remove `oxide/plugins/TwitchIntegration.cs`. Do not run both plugins.
+4. Install `oxide/plugins/MediaIntegration.cs`.
+5. Start the server. On first load the new plugin imports the old config and player data and mirrors legacy `twitch.*` permissions to `media.*`.
+6. Check the migration log, run `/media relaytest`, and test a Twitch redemption.
+7. Keep the old plugin file, config, and data untouched for at least a week as the rollback copy.
+
+`/twitch` remains a command alias for one release and forwards to `/media`. The relay API is backward compatible, so the new plugin can poll an existing relay after the upgrade.
+
+### Roll back
+
+1. Stop the server.
+2. Remove `oxide/plugins/MediaIntegration.cs`.
+3. Restore `oxide/plugins/TwitchIntegration.cs` and, if the new plugin changed them, the old config and data files from the backup.
+4. Start the server and run `/twitch relaytest`.
+
+The old plugin can poll the new relay because the relay API keeps the Twitch event shape and defaults missing `platform` fields to `twitch`.
+
+---
+
 ## Troubleshooting
 
 | Symptom | Fix |
@@ -393,6 +426,7 @@ Known limitations: channel point refunds are not reversed; the native 7DtD Twitc
 
 ## Related pages
 
+- [Media Integration](media-integration.md)
 - [Server Assist API](../../integration/api/index.md)
 - [Companion plugin integration](../../integration/companions/index.md)
 - [Server Assist product guide](../../core/server-assist.md)

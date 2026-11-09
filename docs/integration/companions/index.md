@@ -21,7 +21,7 @@ All companion plugins are **server-only**. They ship no client DLL and no XUi XM
 - Hides the board tabs while open.
 - Gets an injected **Back** button.
 - Permission is checked by Server Assist when building Home, opening and on every forwarded action.
-- Best for PermissionGui, AdminShop, VoteSkipNight, AdminKits, AdminSuite, DailyRewards, DynamicBackpack, PluginHotReload, TwitchIntegration, BuggeeNet and PlayerProfiles.
+- Best for PermissionGui, AdminShop, VoteSkipNight, AdminKits, AdminSuite, DailyRewards, DynamicBackpack, PluginHotReload, MediaIntegration, TwitchIntegration, BuggeeNet and PlayerProfiles.
 
 ### Provider
 
@@ -66,7 +66,8 @@ All companion plugins are **server-only**. They ship no client DLL and no XUi XM
 | DailyRewards | Panel/hook | `dailyrewards` | `dailyrewards.use` | `HandleGuiRequest` | `/rewards` |
 | DynamicBackpack | Panel/hook | `backpack` | `backpack.1` | `HandleBackpackGui` | `/backpack` |
 | PluginHotReload | Panel/hook | `pluginhotreload` | `pluginhotreload.use` | `HandleServerAssistRequest` | `/hotreload` |
-| TwitchIntegration | Panel/hook | `twitch` | `twitch.use` | `HandleGuiRequest` | `/twitch` |
+| MediaIntegration | Panel/hook | `media` | `media.use` | `HandleGuiRequest` | `/media` |
+| TwitchIntegration | Panel/hook (legacy) | `twitch` | `twitch.use` | `HandleGuiRequest` | `/twitch` |
 | BuggeeNet | Panel/hook | `buggee` | `buggeecore.use` | `HandleGuiRequest` | `/buggee` |
 | PlayerProfiles | Panel/hook + `@pp\|` | `playerprofiles` | `playerprofiles.use` | `HandleGuiRequest` | `/profiles` |
 

@@ -11,8 +11,8 @@ using Oxide.Core.Plugins;
 
 namespace Oxide.Plugins
 {
-    [Info("AdminShop", "TheRealM18", "1.1.1")]
-    [Description("An ServerAssist GUI hook that sells valued items and permanent permission products for dukes.")]
+    [Info("AdminShop", "TheRealM18", "1.2.0")]
+    [Description("A ServerAssist GUI hook that sells valued items and permanent or temporary permission products for dukes.")]
     public class AdminShop : CovalencePlugin
     {
         private const string PermUse = "adminshop.use";
@@ -24,6 +24,10 @@ namespace Oxide.Plugins
         private const int UiButtons = 10;
         private const int MinQuality = 1;
         private const int MaxQuality = 6;
+        private const string PermModePermanent = "permanent";
+        private const string PermModeTemporary = "temporary";
+        private const string PermissionDataFileName = "AdminShop/permissions";
+        private const int MaxTemporaryHours = 8760;
 
         private const string IconShop = "sprite:sa_admin_shop";
         private const string IconItems = "sprite:sa_nav_items";
@@ -37,6 +41,8 @@ namespace Oxide.Plugins
         private const string IconBooks = "sprite:sa_nav_logs";
         private const string IconOther = "sprite:sa_nav_help";
         private const string IconPermissions = "sprite:sa_permission_gui";
+        private const string IconTempPermission = "sprite:sa_act_time";
+        private const string IconManage = "sprite:sa_admin_suite";
         private const string IconSearch = "sprite:sa_nav_logs";
         private const string IconRefresh = "sprite:sa_plugin_hot_reload";
         private const string IconBack = "sprite:sa_nav_teleport";
@@ -82,8 +88,11 @@ namespace Oxide.Plugins
 
         private Configuration config;
         private ShopCatalog catalog;
+        private bool catalogBuilt;
+        private int skippedCheapItems;
         private ItemClass currencyItem;
         private ItemValue currencyValue;
+        private TemporaryPermissionData temporaryData;
 
         private readonly List<PermissionProduct> permissionProducts = new List<PermissionProduct>();
         private readonly Dictionary<string, PermissionProduct> permissionProductsById =
@@ -104,6 +113,7 @@ namespace Oxide.Plugins
             permission.RegisterPermission(PermAdmin, this);
 
             LoadConfig();
+            LoadTemporaryPermissionData();
 
             AddCovalenceCommand(new[] { "shop", "adminshop" }, nameof(CommandShop));
 
@@ -111,6 +121,8 @@ namespace Oxide.Plugins
             timer.Once(2f, TryRegisterHook);
             timer.Once(3f, () => BuildCatalog(false));
             timer.Once(5f, TryRegisterHook);
+            timer.Once(5f, ExpireTemporaryPermissions);
+            timer.Every(60f, ExpireTemporaryPermissions);
             loggedHookRegistration = false;
 
             TryRegisterHook();
@@ -120,13 +132,13 @@ namespace Oxide.Plugins
         {
             EnsureDefaultPermissions();
             BuildCatalog(true);
+            ExpireTemporaryPermissions();
             TryRegisterHook();
         }
 
         private void OnServerSave()
         {
-            // The shop keeps no persistent player data. Catalog prices are
-            // recomputed from the current game data.
+            SaveTemporaryPermissionData();
         }
 
         private void OnServerAssistReady()
@@ -139,6 +151,7 @@ namespace Oxide.Plugins
         private void Unload()
         {
             TryUnregisterHook();
+            SaveTemporaryPermissionData();
             sessions.Clear();
         }
 
@@ -192,6 +205,18 @@ namespace Oxide.Plugins
             }
 
             config.MaxQuantityPerPurchase = Math.Max(1, Math.Min(1000000, config.MaxQuantityPerPurchase));
+
+            if (config.MinItemPrice < 0)
+            {
+                config.MinItemPrice = 0;
+            }
+
+            if (config.TemporaryPermissionHours <= 0)
+            {
+                config.TemporaryPermissionHours = 24;
+            }
+
+            config.TemporaryPermissionHours = Math.Max(1, Math.Min(8760, config.TemporaryPermissionHours));
 
             if (config.ItemQuality < MinQuality || config.ItemQuality > MaxQuality)
             {
@@ -320,6 +345,8 @@ namespace Oxide.Plugins
                 product.Description = Clean(product.Description, 160);
                 product.Permission = Clean(product.Permission, 96);
                 product.Price = Math.Max(0, product.Price);
+                product.TemporaryPrice = Math.Max(0, product.TemporaryPrice);
+                product.TemporaryHours = Math.Max(0, Math.Min(MaxTemporaryHours, product.TemporaryHours));
 
                 List<string> nodes = new List<string>();
                 HashSet<string> seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -492,25 +519,6 @@ namespace Oxide.Plugins
             return true;
         }
 
-        private int CountOwnedPermissions(string playerId, List<string> nodes)
-        {
-            if (string.IsNullOrEmpty(playerId) || nodes == null)
-            {
-                return 0;
-            }
-
-            int owned = 0;
-            for (int i = 0; i < nodes.Count; i++)
-            {
-                if (permission.UserHasPermission(playerId, nodes[i]))
-                {
-                    owned++;
-                }
-            }
-
-            return owned;
-        }
-
         private void SavePermissionData()
         {
             if (!permission.IsLoaded)
@@ -528,8 +536,9 @@ namespace Oxide.Plugins
             }
         }
 
-        private void BuyPermission(string playerId, Session session, string productId)
+        private void BuyPermission(string playerId, Session session, string productId, string mode)
         {
+            bool temporary = string.Equals(mode, PermModeTemporary, StringComparison.OrdinalIgnoreCase);
             PermissionProduct product;
             if (string.IsNullOrEmpty(productId) || !permissionProductsById.TryGetValue(productId, out product))
             {
@@ -551,10 +560,10 @@ namespace Oxide.Plugins
                 return;
             }
 
-            int owned = CountOwnedPermissions(playerId, nodes);
-            if (owned >= nodes.Count)
+            int permanentOwned = CountPermanentOwnedPermissions(playerId, nodes);
+            if (permanentOwned >= nodes.Count)
             {
-                session.Status = "You already have this permission.";
+                session.Status = "You already have this permission permanently.";
                 return;
             }
 
@@ -565,7 +574,9 @@ namespace Oxide.Plugins
                 return;
             }
 
-            int price = Math.Max(0, product.Price);
+            int hours = temporary ? GetTemporaryHours(product) : 0;
+            int activeBefore = temporary ? CountActiveTemporaryPermissions(playerId, nodes) : 0;
+            int price = temporary ? GetTemporaryPrice(product) : GetPermanentPrice(product);
             int dukes = CountCurrency(entity);
             if (dukes < price)
             {
@@ -605,6 +616,13 @@ namespace Oxide.Plugins
             for (int i = 0; i < nodes.Count; i++)
             {
                 string node = nodes[i];
+                if (HasPermanentPermission(playerId, node))
+                {
+                    continue;
+                }
+
+                // A temporary grant is already a direct user permission. Renew
+                // it below instead of granting it again.
                 if (permission.UserHasPermission(playerId, node))
                 {
                     continue;
@@ -655,17 +673,424 @@ namespace Oxide.Plugins
                 return;
             }
 
+            if (temporary)
+            {
+                for (int i = 0; i < nodes.Count; i++)
+                {
+                    string node = nodes[i];
+                    if (HasPermanentPermission(playerId, node))
+                    {
+                        continue;
+                    }
+
+                    AddOrUpdateTemporaryGrant(playerId, node, product.Id, hours);
+                }
+            }
+            else
+            {
+                RemoveTemporaryGrants(playerId, nodes);
+            }
+
             SavePermissionData();
 
-            session.Status = "Bought '" + product.Name + "' for " + FormatNumber(price) + " dukes.";
+            if (temporary)
+            {
+                string action = activeBefore > 0 ? "Renewed" : "Bought";
+                session.Status = action + " temporary '" + product.Name + "' for " +
+                                 FormatNumber(price) + " dukes (" + FormatDuration(hours) + ").";
+            }
+            else
+            {
+                session.Status = "Bought permanent '" + product.Name + "' for " +
+                                 FormatNumber(price) + " dukes.";
+            }
 
             if (config.LogPurchases)
             {
                 IPlayer covPlayer = players.FindPlayerById(playerId);
                 string name = covPlayer != null ? covPlayer.Name : playerId;
+                string kind = temporary ? "temporary" : "permanent";
+                string duration = temporary ? " (" + FormatDuration(hours) + ")" : string.Empty;
                 Interface.Oxide.LogInfo(
-                    "[AdminShop] " + name + " (" + playerId + ") bought permission product '" + product.Name +
-                    "' (" + string.Join(", ", nodes.ToArray()) + ") for " + price + " dukes.");
+                    "[AdminShop] " + name + " (" + playerId + ") bought " + kind +
+                    " permission product '" + product.Name + "' (" + string.Join(", ", nodes.ToArray()) +
+                    ") for " + price + " dukes" + duration + ".");
+            }
+        }
+
+        #endregion
+
+        #region Temporary permissions
+
+        private static bool IsTemporaryMode(Session session)
+        {
+            return session != null &&
+                   string.Equals(session.PermissionMode, PermModeTemporary, StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static int GetPermanentPrice(PermissionProduct product)
+        {
+            return product == null ? 0 : Math.Max(0, product.Price);
+        }
+
+        private static int GetTemporaryPrice(PermissionProduct product)
+        {
+            if (product == null)
+            {
+                return 0;
+            }
+
+            if (product.TemporaryPrice > 0)
+            {
+                return product.TemporaryPrice;
+            }
+
+            int permanent = Math.Max(0, product.Price);
+            return permanent <= 0 ? 0 : Math.Max(1, permanent / 10);
+        }
+
+        private int GetTemporaryHours(PermissionProduct product)
+        {
+            int hours = product != null && product.TemporaryHours > 0
+                ? product.TemporaryHours
+                : config.TemporaryPermissionHours;
+            return Math.Max(1, Math.Min(MaxTemporaryHours, hours));
+        }
+
+        private PermissionProduct GetSelectedPermissionProduct(Session session)
+        {
+            if (session == null || string.IsNullOrEmpty(session.SelectedPermissionId))
+            {
+                return null;
+            }
+
+            PermissionProduct product;
+            return permissionProductsById.TryGetValue(session.SelectedPermissionId, out product) ? product : null;
+        }
+
+        private void LoadTemporaryPermissionData()
+        {
+            try
+            {
+                temporaryData = Interface.Oxide.DataFileSystem.ReadObject<TemporaryPermissionData>(
+                    PermissionDataFileName);
+            }
+            catch (Exception exception)
+            {
+                Interface.Oxide.LogWarning(
+                    "[AdminShop] temporary permission data could not be read: " + exception.Message);
+                temporaryData = null;
+            }
+
+            if (temporaryData == null)
+            {
+                temporaryData = new TemporaryPermissionData();
+            }
+
+            if (temporaryData.Grants == null)
+            {
+                temporaryData.Grants = new List<TemporaryGrant>();
+            }
+
+            for (int i = temporaryData.Grants.Count - 1; i >= 0; i--)
+            {
+                TemporaryGrant grant = temporaryData.Grants[i];
+                if (grant == null || string.IsNullOrEmpty(grant.PlayerId) ||
+                    string.IsNullOrEmpty(grant.Permission) || grant.ExpiresAt <= 0)
+                {
+                    temporaryData.Grants.RemoveAt(i);
+                }
+            }
+        }
+
+        private void SaveTemporaryPermissionData()
+        {
+            if (temporaryData == null)
+            {
+                return;
+            }
+
+            try
+            {
+                Interface.Oxide.DataFileSystem.WriteObject(PermissionDataFileName, temporaryData, true);
+            }
+            catch (Exception exception)
+            {
+                Interface.Oxide.LogWarning(
+                    "[AdminShop] temporary permission data could not be saved: " + exception.Message);
+            }
+        }
+
+        private void ExpireTemporaryPermissions()
+        {
+            if (temporaryData == null || temporaryData.Grants == null ||
+                temporaryData.Grants.Count == 0 || !permission.IsLoaded)
+            {
+                return;
+            }
+
+            long now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+            bool changed = false;
+            for (int i = temporaryData.Grants.Count - 1; i >= 0; i--)
+            {
+                TemporaryGrant grant = temporaryData.Grants[i];
+                if (grant == null)
+                {
+                    temporaryData.Grants.RemoveAt(i);
+                    changed = true;
+                    continue;
+                }
+
+                if (grant.ExpiresAt > now)
+                {
+                    continue;
+                }
+
+                try
+                {
+                    permission.RevokeUserPermission(grant.PlayerId, grant.Permission);
+                }
+                catch (Exception exception)
+                {
+                    Interface.Oxide.LogWarning(
+                        "[AdminShop] temporary permission '" + grant.Permission +
+                        "' could not be revoked from " + grant.PlayerId + ": " + exception.Message);
+                }
+
+                Interface.Oxide.LogInfo(
+                    "[AdminShop] temporary permission '" + grant.Permission + "' expired for " +
+                    grant.PlayerId + ".");
+                temporaryData.Grants.RemoveAt(i);
+                changed = true;
+            }
+
+            if (changed)
+            {
+                SaveTemporaryPermissionData();
+                SavePermissionData();
+            }
+        }
+
+        private TemporaryGrant FindTemporaryGrant(string playerId, string permissionName)
+        {
+            if (temporaryData == null || temporaryData.Grants == null ||
+                string.IsNullOrEmpty(playerId) || string.IsNullOrEmpty(permissionName))
+            {
+                return null;
+            }
+
+            for (int i = 0; i < temporaryData.Grants.Count; i++)
+            {
+                TemporaryGrant grant = temporaryData.Grants[i];
+                if (grant != null &&
+                    string.Equals(grant.PlayerId, playerId, StringComparison.OrdinalIgnoreCase) &&
+                    string.Equals(grant.Permission, permissionName, StringComparison.OrdinalIgnoreCase))
+                {
+                    return grant;
+                }
+            }
+
+            return null;
+        }
+
+        private bool HasTemporaryGrantRecord(string playerId, string permissionName)
+        {
+            return FindTemporaryGrant(playerId, permissionName) != null;
+        }
+
+        private bool HasActiveTemporaryGrant(string playerId, string permissionName)
+        {
+            TemporaryGrant grant = FindTemporaryGrant(playerId, permissionName);
+            return grant != null && grant.ExpiresAt > DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+        }
+
+        private void AddOrUpdateTemporaryGrant(string playerId, string permissionName, string productId, int hours)
+        {
+            if (temporaryData == null)
+            {
+                temporaryData = new TemporaryPermissionData();
+            }
+
+            if (temporaryData.Grants == null)
+            {
+                temporaryData.Grants = new List<TemporaryGrant>();
+            }
+
+            long now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+            long duration = (long)Math.Max(1, hours) * 3600L;
+            TemporaryGrant grant = FindTemporaryGrant(playerId, permissionName);
+            if (grant == null)
+            {
+                grant = new TemporaryGrant
+                {
+                    PlayerId = playerId,
+                    Permission = permissionName,
+                    ProductId = productId,
+                    ExpiresAt = now + duration
+                };
+                temporaryData.Grants.Add(grant);
+            }
+            else
+            {
+                grant.ProductId = productId;
+                grant.ExpiresAt = Math.Max(now, grant.ExpiresAt) + duration;
+            }
+
+            SaveTemporaryPermissionData();
+        }
+
+        private void RemoveTemporaryGrants(string playerId, List<string> nodes)
+        {
+            if (temporaryData == null || temporaryData.Grants == null || nodes == null)
+            {
+                return;
+            }
+
+            bool changed = false;
+            for (int i = temporaryData.Grants.Count - 1; i >= 0; i--)
+            {
+                TemporaryGrant grant = temporaryData.Grants[i];
+                if (grant != null &&
+                    string.Equals(grant.PlayerId, playerId, StringComparison.OrdinalIgnoreCase) &&
+                    ContainsNode(nodes, grant.Permission))
+                {
+                    temporaryData.Grants.RemoveAt(i);
+                    changed = true;
+                }
+            }
+
+            if (changed)
+            {
+                SaveTemporaryPermissionData();
+            }
+        }
+
+        private static bool ContainsNode(List<string> nodes, string node)
+        {
+            if (nodes == null || string.IsNullOrEmpty(node))
+            {
+                return false;
+            }
+
+            for (int i = 0; i < nodes.Count; i++)
+            {
+                if (string.Equals(nodes[i], node, StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private bool HasPermanentPermission(string playerId, string permissionName)
+        {
+            if (string.IsNullOrEmpty(playerId) || string.IsNullOrEmpty(permissionName))
+            {
+                return false;
+            }
+
+            if (!permission.UserHasPermission(playerId, permissionName))
+            {
+                return false;
+            }
+
+            // A temporary grant is stored as a normal direct user permission.
+            // Treat any node with a temporary record as temporary-only so the
+            // player can upgrade to permanent later.
+            return !HasTemporaryGrantRecord(playerId, permissionName);
+        }
+
+        private int CountPermanentOwnedPermissions(string playerId, List<string> nodes)
+        {
+            if (string.IsNullOrEmpty(playerId) || nodes == null)
+            {
+                return 0;
+            }
+
+            int owned = 0;
+            for (int i = 0; i < nodes.Count; i++)
+            {
+                if (HasPermanentPermission(playerId, nodes[i]))
+                {
+                    owned++;
+                }
+            }
+
+            return owned;
+        }
+
+        private int CountActiveTemporaryPermissions(string playerId, List<string> nodes)
+        {
+            if (string.IsNullOrEmpty(playerId) || nodes == null)
+            {
+                return 0;
+            }
+
+            int active = 0;
+            for (int i = 0; i < nodes.Count; i++)
+            {
+                if (HasActiveTemporaryGrant(playerId, nodes[i]))
+                {
+                    active++;
+                }
+            }
+
+            return active;
+        }
+
+        private long GetLatestTemporaryExpiry(string playerId, List<string> nodes)
+        {
+            if (string.IsNullOrEmpty(playerId) || nodes == null)
+            {
+                return 0;
+            }
+
+            long latest = 0;
+            for (int i = 0; i < nodes.Count; i++)
+            {
+                TemporaryGrant grant = FindTemporaryGrant(playerId, nodes[i]);
+                if (grant != null && grant.ExpiresAt > latest &&
+                    grant.ExpiresAt > DateTimeOffset.UtcNow.ToUnixTimeSeconds())
+                {
+                    latest = grant.ExpiresAt;
+                }
+            }
+
+            return latest;
+        }
+
+        private static string FormatDuration(int hours)
+        {
+            if (hours <= 0)
+            {
+                return "0h";
+            }
+
+            if (hours % 24 == 0)
+            {
+                return (hours / 24) + "d";
+            }
+
+            return hours + "h";
+        }
+
+        private static string FormatExpiry(long unixSeconds)
+        {
+            if (unixSeconds <= 0)
+            {
+                return "soon";
+            }
+
+            try
+            {
+                return DateTimeOffset.FromUnixTimeSeconds(unixSeconds)
+                    .ToLocalTime()
+                    .ToString("MMM d HH:mm", CultureInfo.InvariantCulture);
+            }
+            catch
+            {
+                return "soon";
             }
         }
 
@@ -818,14 +1243,17 @@ namespace Oxide.Plugins
                     return ErrorView("You do not have permission to use the Admin Shop.");
                 }
 
-                if (catalog == null || catalog.All.Count == 0 || currencyItem == null)
+                if (!catalogBuilt || catalog == null || currencyItem == null)
                 {
                     BuildCatalog(false);
                 }
 
-                if ((catalog == null || catalog.All.Count == 0) && !HasEnabledPermissionProducts())
+                bool hasItems = catalog != null && catalog.All.Count > 0;
+                bool hasPermissions = HasEnabledPermissionProducts() ||
+                                      (permissionProducts.Count > 0 && HasAdminPermission(playerId));
+                if (!hasItems && !hasPermissions)
                 {
-                    return ErrorView("The item catalog is not ready yet. Check the server log.");
+                    return ErrorView("No shop items are available. Check MinItemPrice and the server log.");
                 }
 
                 if (currencyItem == null)
@@ -878,6 +1306,7 @@ namespace Oxide.Plugins
             session.Query = string.Empty;
             session.SelectedId = null;
             session.SelectedPermissionId = null;
+            session.PermissionMode = PermModePermanent;
             session.Page = 0;
             session.Status = string.Empty;
             ClearPrompt(session);
@@ -938,18 +1367,36 @@ namespace Oxide.Plugins
                     session.Query = string.Empty;
                     session.SelectedId = null;
                     session.SelectedPermissionId = null;
+                    session.PermissionMode = PermModePermanent;
                     session.Page = 0;
                     ClearPrompt(session);
                     break;
 
                 case "back":
                     ClearPrompt(session);
-                    if (session.Screen == "permissiondetail")
+                    if (session.Screen == "permissionedit")
+                    {
+                        session.Screen = "permissionmanage";
+                        session.SelectedPermissionId = null;
+                    }
+                    else if (session.Screen == "permissionmanage")
+                    {
+                        session.Screen = "permissioncategories";
+                        session.SelectedPermissionId = null;
+                        session.Page = 0;
+                    }
+                    else if (session.Screen == "permissiondetail")
                     {
                         session.Screen = "permissions";
                         session.SelectedPermissionId = null;
                     }
                     else if (session.Screen == "permissions")
+                    {
+                        session.Screen = "permissioncategories";
+                        session.SelectedPermissionId = null;
+                        session.Page = 0;
+                    }
+                    else if (session.Screen == "permissioncategories")
                     {
                         session.Screen = "home";
                         session.SelectedPermissionId = null;
@@ -982,10 +1429,132 @@ namespace Oxide.Plugins
                     break;
 
                 case "permissions":
-                    session.Screen = "permissions";
+                case "permcat":
+                    if (parts.Length > 1)
+                    {
+                        string mode = parts[1].ToLowerInvariant();
+                        session.PermissionMode = mode == PermModeTemporary
+                            ? PermModeTemporary
+                            : PermModePermanent;
+                    }
+                    session.Screen = parts.Length > 1 ? "permissions" : "permissioncategories";
                     session.SelectedPermissionId = null;
                     session.Page = 0;
                     ClearPrompt(session);
+                    break;
+
+                case "permmanage":
+                    if (!HasAdminPermission(playerId))
+                    {
+                        session.Status = "You need the 'adminshop.admin' permission.";
+                        break;
+                    }
+
+                    session.Screen = "permissionmanage";
+                    session.SelectedPermissionId = null;
+                    session.Page = 0;
+                    ClearPrompt(session);
+                    break;
+
+                case "permedit":
+                    if (!HasAdminPermission(playerId))
+                    {
+                        session.Status = "You need the 'adminshop.admin' permission.";
+                        break;
+                    }
+
+                    if (parts.Length > 1)
+                    {
+                        PermissionProduct editProduct;
+                        if (permissionProductsById.TryGetValue(parts[1], out editProduct))
+                        {
+                            session.Screen = "permissionedit";
+                            session.SelectedPermissionId = editProduct.Id;
+                            ClearPrompt(session);
+                        }
+                        else
+                        {
+                            session.Status = "That permission product no longer exists.";
+                        }
+                    }
+                    break;
+
+                case "permeditfield":
+                    if (!HasAdminPermission(playerId))
+                    {
+                        session.Status = "You need the 'adminshop.admin' permission.";
+                        break;
+                    }
+
+                    if (parts.Length > 1)
+                    {
+                        PermissionProduct editProduct = GetSelectedPermissionProduct(session);
+                        if (editProduct == null)
+                        {
+                            session.Status = "Select a permission product first.";
+                            break;
+                        }
+
+                        string field = parts[1].ToLowerInvariant();
+                        if (field == "price")
+                        {
+                            PromptInput(session, "permprice", "Permanent price in dukes",
+                                GetPermanentPrice(editProduct).ToString(CultureInfo.InvariantCulture));
+                        }
+                        else if (field == "tempprice")
+                        {
+                            PromptInput(session, "tempprice", "Temporary price in dukes (0 = auto)",
+                                editProduct.TemporaryPrice.ToString(CultureInfo.InvariantCulture));
+                        }
+                        else if (field == "tempduration")
+                        {
+                            PromptInput(session, "tempduration", "Temporary duration in hours (0 = default)",
+                                editProduct.TemporaryHours.ToString(CultureInfo.InvariantCulture));
+                        }
+                    }
+                    break;
+
+                case "permauto":
+                    if (!HasAdminPermission(playerId))
+                    {
+                        session.Status = "You need the 'adminshop.admin' permission.";
+                        break;
+                    }
+
+                    {
+                        PermissionProduct editProduct = GetSelectedPermissionProduct(session);
+                        if (editProduct == null)
+                        {
+                            session.Status = "Select a permission product first.";
+                            break;
+                        }
+
+                        editProduct.TemporaryPrice = 0;
+                        SaveConfig();
+                        session.Status = "Temporary price for '" + editProduct.Name + "' reset to auto (1/10).";
+                    }
+                    break;
+
+                case "permtoggle":
+                    if (!HasAdminPermission(playerId))
+                    {
+                        session.Status = "You need the 'adminshop.admin' permission.";
+                        break;
+                    }
+
+                    {
+                        PermissionProduct editProduct = GetSelectedPermissionProduct(session);
+                        if (editProduct == null)
+                        {
+                            session.Status = "Select a permission product first.";
+                            break;
+                        }
+
+                        editProduct.Enabled = !editProduct.Enabled;
+                        SaveConfig();
+                        session.Status = "'" + editProduct.Name + "' is now " +
+                                         (editProduct.Enabled ? "enabled" : "disabled") + ".";
+                    }
                     break;
 
                 case "permission":
@@ -1000,7 +1569,7 @@ namespace Oxide.Plugins
                 case "buypermission":
                     if (parts.Length > 1)
                     {
-                        BuyPermission(playerId, session, parts[1]);
+                        BuyPermission(playerId, session, parts[1], session.PermissionMode);
                     }
                     break;
 
@@ -1120,6 +1689,61 @@ namespace Oxide.Plugins
                 }
 
                 BuyItem(playerId, session, session.SelectedId, quantity);
+                return Render(playerId, session);
+            }
+
+            if (mode == "permprice" || mode == "tempprice" || mode == "tempduration")
+            {
+                if (!HasAdminPermission(playerId))
+                {
+                    session.Status = "You need the 'adminshop.admin' permission.";
+                    return Render(playerId, session);
+                }
+
+                PermissionProduct product = GetSelectedPermissionProduct(session);
+                if (product == null)
+                {
+                    session.Status = "Select a permission product first.";
+                    return Render(playerId, session);
+                }
+
+                int number;
+                if (!int.TryParse(text.Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out number) ||
+                    number < 0)
+                {
+                    session.Status = "Type a whole number of 0 or more.";
+                    string label = mode == "permprice"
+                        ? "Permanent price in dukes"
+                        : (mode == "tempprice"
+                            ? "Temporary price in dukes (0 = auto)"
+                            : "Temporary duration in hours (0 = default)");
+                    PromptInput(session, mode, label, text);
+                    return Render(playerId, session);
+                }
+
+                if (mode == "permprice")
+                {
+                    product.Price = number;
+                    session.Status = "'" + product.Name + "' permanent price set to " +
+                                     FormatNumber(number) + " dukes.";
+                }
+                else if (mode == "tempprice")
+                {
+                    product.TemporaryPrice = number;
+                    session.Status = number == 0
+                        ? "'" + product.Name + "' temporary price reset to auto (1/10)."
+                        : "'" + product.Name + "' temporary price set to " + FormatNumber(number) + " dukes.";
+                }
+                else
+                {
+                    product.TemporaryHours = Math.Min(MaxTemporaryHours, number);
+                    session.Status = number == 0
+                        ? "'" + product.Name + "' temporary duration reset to the global default."
+                        : "'" + product.Name + "' temporary duration set to " +
+                          FormatDuration(product.TemporaryHours) + ".";
+                }
+
+                SaveConfig();
                 return Render(playerId, session);
             }
 
@@ -1507,10 +2131,12 @@ namespace Oxide.Plugins
                 LoadConfig();
             }
 
-            if (!force && catalog != null && catalog.All.Count > 0 && currencyItem != null)
+            if (!force && catalogBuilt && catalog != null && currencyItem != null)
             {
                 return;
             }
+
+            skippedCheapItems = 0;
 
             ItemClass resolvedCurrency = null;
             try
@@ -1544,6 +2170,7 @@ namespace Oxide.Plugins
             if (items == null || items.Length == 0)
             {
                 catalog = null;
+                catalogBuilt = false;
                 return;
             }
 
@@ -1571,6 +2198,7 @@ namespace Oxide.Plugins
             result.BuildCategories(CategoryOrder);
 
             catalog = result;
+            catalogBuilt = true;
 
             if (result.All.Count == 0)
             {
@@ -1578,7 +2206,8 @@ namespace Oxide.Plugins
                 {
                     loggedEmptyCatalog = true;
                     Interface.Oxide.LogWarning(
-                        "[AdminShop] catalog built with 0 items; the shop will retry when it is opened.");
+                        "[AdminShop] catalog built with 0 items (" + skippedCheapItems +
+                        " below MinItemPrice); the shop will stay empty until reloaded.");
                 }
 
                 return;
@@ -1586,7 +2215,8 @@ namespace Oxide.Plugins
 
             loggedEmptyCatalog = false;
             Interface.Oxide.LogInfo(
-                "[AdminShop] catalog built: " + result.All.Count + " items, currency=" + config.CurrencyItem + ".");
+                "[AdminShop] catalog built: " + result.All.Count + " items (" + skippedCheapItems +
+                " below MinItemPrice skipped), currency=" + config.CurrencyItem + ".");
         }
 
         private void AddCatalogItem(ShopCatalog result, ItemClass itemClass, ItemClass resolvedCurrency)
@@ -1648,6 +2278,12 @@ namespace Oxide.Plugins
                 HasQuality = itemClass.HasQuality,
                 MaxStack = GetMaxStack(itemClass)
             };
+
+            if (config.MinItemPrice > 0 && GetUnitPrice(entry) < config.MinItemPrice)
+            {
+                skippedCheapItems++;
+                return;
+            }
 
             if (!result.ById.ContainsKey(entry.Id))
             {
@@ -1882,13 +2518,25 @@ namespace Oxide.Plugins
             List<ButtonInfo> buttons = new List<ButtonInfo>();
             string subtitle;
 
-            if (session.Screen == "permissiondetail")
+            if (session.Screen == "permissionedit")
+            {
+                RenderPermissionEdit(playerId, session, rows, buttons, out subtitle);
+            }
+            else if (session.Screen == "permissionmanage")
+            {
+                RenderPermissionManage(playerId, session, rows, buttons, out subtitle);
+            }
+            else if (session.Screen == "permissiondetail")
             {
                 RenderPermissionDetail(playerId, session, rows, buttons, out subtitle);
             }
             else if (session.Screen == "permissions")
             {
                 RenderPermissionList(playerId, session, rows, buttons, out subtitle);
+            }
+            else if (session.Screen == "permissioncategories")
+            {
+                RenderPermissionCategories(playerId, session, rows, buttons, out subtitle);
             }
             else if (session.Screen == "detail")
             {
@@ -1957,9 +2605,19 @@ namespace Oxide.Plugins
                 return IconShop;
             }
 
-            if (session.Screen == "permissions" || session.Screen == "permissiondetail")
+            if (session.Screen == "permissioncategories")
             {
                 return IconPermissions;
+            }
+
+            if (session.Screen == "permissionmanage" || session.Screen == "permissionedit")
+            {
+                return IconManage;
+            }
+
+            if (session.Screen == "permissions" || session.Screen == "permissiondetail")
+            {
+                return IsTemporaryMode(session) ? IconTempPermission : IconPermissions;
             }
 
             if (session.Screen == "detail")
@@ -2025,13 +2683,14 @@ namespace Oxide.Plugins
                 });
             }
 
-            if (HasEnabledPermissionProducts())
+            if (HasEnabledPermissionProducts() ||
+                (permissionProducts.Count > 0 && HasAdminPermission(playerId)))
             {
                 buttons.Add(new ButtonInfo
                 {
-                    Action = "permissions",
+                    Action = "permcat",
                     Label = "Permissions",
-                    Tooltip = "Buy permanent permissions with dukes.",
+                    Tooltip = "Buy permanent or temporary permissions with dukes.",
                     Icon = IconPermissions
                 });
             }
@@ -2052,8 +2711,10 @@ namespace Oxide.Plugins
                 subtitle = "Items  |  catalog unavailable  |  Dukes: " + GetDukesLabel(playerId);
                 rows.Add(new RowInfo
                 {
-                    Label = "Item catalog unavailable.",
-                    Sub = "Run /adminshop reload or check the server log.",
+                    Label = catalogBuilt ? "No items are available above MinItemPrice." : "Item catalog unavailable.",
+                    Sub = catalogBuilt
+                        ? "Lower MinItemPrice or check /adminshop reload."
+                        : "Run /adminshop reload or check the server log.",
                     Enabled = false,
                     Icon = IconWarning,
                     Badge = "ERROR"
@@ -2311,8 +2972,74 @@ namespace Oxide.Plugins
             });
         }
 
+        private void RenderPermissionCategories(string playerId, Session session, List<RowInfo> rows,
+            List<ButtonInfo> buttons, out string subtitle)
+        {
+            List<PermissionProduct> enabled = GetEnabledPermissionProducts();
+            int permanentOwned = 0;
+            int temporaryActive = 0;
+            for (int i = 0; i < enabled.Count; i++)
+            {
+                List<string> nodes = GetProductPermissions(enabled[i]);
+                permanentOwned += CountPermanentOwnedPermissions(playerId, nodes);
+                temporaryActive += CountActiveTemporaryPermissions(playerId, nodes);
+            }
+
+            subtitle = "Permissions  |  " + enabled.Count + " product" +
+                       (enabled.Count == 1 ? string.Empty : "s") + "  |  Dukes: " + GetDukesLabel(playerId);
+
+            rows.Add(new RowInfo
+            {
+                Action = "permcat|" + PermModePermanent,
+                Label = "Permanent Permissions",
+                Sub = "Keep forever  |  " + permanentOwned + " node" +
+                      (permanentOwned == 1 ? string.Empty : "s") + " owned",
+                Enabled = true,
+                Icon = IconPermissions,
+                Badge = "PERM"
+            });
+            rows.Add(new RowInfo
+            {
+                Action = "permcat|" + PermModeTemporary,
+                Label = "Temporary Permissions",
+                Sub = "Rent for " + FormatDuration(config.TemporaryPermissionHours) + "  |  " +
+                      temporaryActive + " node" + (temporaryActive == 1 ? string.Empty : "s") + " active",
+                Enabled = true,
+                Icon = IconTempPermission,
+                Badge = "TEMP"
+            });
+
+            buttons.Add(new ButtonInfo
+            {
+                Action = "home",
+                Label = "Categories",
+                Tooltip = "Return to the category list.",
+                Icon = IconShop
+            });
+
+            if (HasAdminPermission(playerId))
+            {
+                buttons.Add(new ButtonInfo
+                {
+                    Action = "permmanage",
+                    Label = "Manage Prices",
+                    Tooltip = "Edit permanent and temporary permission prices.",
+                    Icon = IconManage
+                });
+            }
+
+            buttons.Add(new ButtonInfo
+            {
+                Action = "refresh",
+                Label = "Refresh",
+                Tooltip = "Redraw this page.",
+                Icon = IconRefresh
+            });
+        }
+
         private void RenderPermissionList(string playerId, Session session, List<RowInfo> rows, List<ButtonInfo> buttons, out string subtitle)
         {
+            bool temporary = IsTemporaryMode(session);
             List<PermissionProduct> list = GetEnabledPermissionProducts();
             int pages = Math.Max(1, (list.Count + UiRows - 1) / UiRows);
             if (session.Page < 0)
@@ -2324,7 +3051,9 @@ namespace Oxide.Plugins
                 session.Page = pages - 1;
             }
 
-            subtitle = "Permissions  |  " + list.Count + " product" + (list.Count == 1 ? string.Empty : "s") +
+            string modeTitle = temporary ? "Temporary Permissions" : "Permanent Permissions";
+            subtitle = modeTitle + "  |  " + list.Count + " product" +
+                       (list.Count == 1 ? string.Empty : "s") +
                        "  |  page " + (session.Page + 1) + "/" + pages +
                        "  |  Dukes: " + GetDukesLabel(playerId);
 
@@ -2333,23 +3062,37 @@ namespace Oxide.Plugins
             {
                 PermissionProduct product = list[start + i];
                 List<string> nodes = GetProductPermissions(product);
-                int owned = CountOwnedPermissions(playerId, nodes);
-                bool allOwned = nodes.Count > 0 && owned >= nodes.Count;
+                int price = temporary ? GetTemporaryPrice(product) : GetPermanentPrice(product);
+                int hours = GetTemporaryHours(product);
                 string reason;
                 bool canGrant = CanGrantProduct(product, out reason);
 
-                string sub = FormatNumber(product.Price) + " dukes";
+                bool allOwned = nodes.Count > 0 &&
+                                CountPermanentOwnedPermissions(playerId, nodes) >= nodes.Count;
+                int activeTemp = temporary ? CountActiveTemporaryPermissions(playerId, nodes) : 0;
+                bool allActive = temporary && nodes.Count > 0 && activeTemp >= nodes.Count;
+
+                string sub = FormatNumber(price) + " dukes";
+                if (temporary)
+                {
+                    sub += " / " + FormatDuration(hours);
+                }
+
                 if (allOwned)
                 {
                     sub += "  |  owned";
+                }
+                else if (allActive)
+                {
+                    sub += "  |  active";
                 }
                 else if (!canGrant)
                 {
                     sub += "  |  unavailable";
                 }
-                else if (owned > 0)
+                else if (temporary && activeTemp > 0)
                 {
-                    sub += "  |  " + owned + "/" + nodes.Count + " owned";
+                    sub += "  |  " + activeTemp + "/" + nodes.Count + " active";
                 }
 
                 string summary = GetProductPermissionSummary(product);
@@ -2365,10 +3108,20 @@ namespace Oxide.Plugins
                     badge = "OWNED";
                     icon = IconOwned;
                 }
+                else if (allActive)
+                {
+                    badge = "ACTIVE";
+                    icon = IconTempPermission;
+                }
                 else if (!canGrant)
                 {
                     badge = "LOCKED";
                     icon = IconWarning;
+                }
+                else if (temporary)
+                {
+                    badge = "TEMP";
+                    icon = IconTempPermission;
                 }
                 else if (nodes.Count > 1)
                 {
@@ -2396,14 +3149,25 @@ namespace Oxide.Plugins
             {
                 rows.Add(new RowInfo
                 {
-                    Label = "No permissions are configured.",
-                    Sub = "Add PermissionProducts to oxide/config/AdminShop.json.",
+                    Label = permissionProducts.Count > 0
+                        ? "No enabled permissions in this category."
+                        : "No permissions are configured.",
+                    Sub = permissionProducts.Count > 0
+                        ? "Ask an admin to enable products in Manage Prices."
+                        : "Add PermissionProducts to oxide/config/AdminShop.json.",
                     Enabled = false,
                     Icon = IconWarning,
                     Badge = "NONE"
                 });
             }
 
+            buttons.Add(new ButtonInfo
+            {
+                Action = "back",
+                Label = "Back",
+                Tooltip = "Return to the permission categories.",
+                Icon = IconBack
+            });
             buttons.Add(new ButtonInfo
             {
                 Action = "home",
@@ -2455,15 +3219,22 @@ namespace Oxide.Plugins
                 return;
             }
 
+            bool temporary = IsTemporaryMode(session);
             List<string> nodes = GetProductPermissions(product);
             int dukes = GetDukes(playerId);
             bool online = dukes >= 0;
-            int owned = CountOwnedPermissions(playerId, nodes);
-            bool allOwned = nodes.Count > 0 && owned >= nodes.Count;
+            int price = temporary ? GetTemporaryPrice(product) : GetPermanentPrice(product);
+            int hours = GetTemporaryHours(product);
+            int permanentOwned = CountPermanentOwnedPermissions(playerId, nodes);
+            int activeTemp = temporary ? CountActiveTemporaryPermissions(playerId, nodes) : 0;
+            bool allOwned = nodes.Count > 0 && permanentOwned >= nodes.Count;
+            bool allActive = temporary && nodes.Count > 0 && activeTemp >= nodes.Count;
+            long latestExpiry = temporary ? GetLatestTemporaryExpiry(playerId, nodes) : 0;
+
             string reason;
             bool canGrant = CanGrantProduct(product, out reason);
-            bool affordable = online && dukes >= product.Price;
-            bool buyEnabled = product.Enabled && !allOwned && canGrant && affordable;
+            bool affordable = online && dukes >= price;
+            bool buyEnabled = product.Enabled && canGrant && affordable && !allOwned;
 
             string status;
             string statusIcon;
@@ -2476,7 +3247,7 @@ namespace Oxide.Plugins
             }
             else if (allOwned)
             {
-                status = "owned";
+                status = "owned permanently";
                 statusIcon = IconOwned;
                 statusBadge = "OWNED";
             }
@@ -2486,20 +3257,29 @@ namespace Oxide.Plugins
                 statusIcon = IconWarning;
                 statusBadge = "LOCKED";
             }
-            else if (owned > 0)
+            else if (temporary && activeTemp > 0)
             {
-                status = "partially owned (" + owned + "/" + nodes.Count + ")";
+                status = allActive
+                    ? "active until " + FormatExpiry(latestExpiry)
+                    : activeTemp + "/" + nodes.Count + " active until " + FormatExpiry(latestExpiry);
+                statusIcon = IconTempPermission;
+                statusBadge = "ACTIVE";
+            }
+            else if (!temporary && permanentOwned > 0)
+            {
+                status = "partially owned (" + permanentOwned + "/" + nodes.Count + ")";
                 statusIcon = IconPermissions;
                 statusBadge = "BUNDLE";
             }
             else
             {
                 status = "not owned";
-                statusIcon = IconPermissions;
-                statusBadge = nodes.Count > 1 ? "BUNDLE" : "PERM";
+                statusIcon = temporary ? IconTempPermission : IconPermissions;
+                statusBadge = nodes.Count > 1 ? "BUNDLE" : (temporary ? "TEMP" : "PERM");
             }
 
-            subtitle = product.Name + "  |  " + FormatNumber(product.Price) + " dukes  |  Dukes: " +
+            string modeTitle = temporary ? "Temporary Permission" : "Permanent Permission";
+            subtitle = product.Name + "  |  " + modeTitle + "  |  " + FormatNumber(price) + " dukes  |  Dukes: " +
                        (online ? FormatNumber(dukes) : "offline");
 
             rows.Add(new RowInfo
@@ -2507,15 +3287,27 @@ namespace Oxide.Plugins
                 Label = "Product",
                 Sub = product.Name,
                 Enabled = false,
-                Icon = IconPermissions
+                Icon = temporary ? IconTempPermission : IconPermissions
             });
             rows.Add(new RowInfo
             {
-                Label = "Price",
-                Sub = FormatNumber(product.Price) + " dukes",
+                Label = temporary ? "Rental Price" : "Price",
+                Sub = FormatNumber(price) + " dukes",
                 Enabled = false,
                 Icon = IconPrice
             });
+            if (temporary)
+            {
+                rows.Add(new RowInfo
+                {
+                    Label = "Duration",
+                    Sub = FormatDuration(hours) + " per purchase" +
+                          (product.TemporaryHours > 0 ? " (per product)" : " (default)"),
+                    Enabled = false,
+                    Icon = IconTempPermission
+                });
+            }
+
             rows.Add(new RowInfo
             {
                 Label = "Your Dukes",
@@ -2544,8 +3336,9 @@ namespace Oxide.Plugins
                 Sub = nodes.Count == 0
                     ? "no permission nodes configured"
                     : (nodes.Count == 1
-                        ? "permanent user permission"
-                        : "permanent permission bundle (" + nodes.Count + " nodes)"),
+                        ? (temporary ? "temporary user permission" : "permanent user permission")
+                        : (temporary ? "temporary bundle" : "permanent bundle") +
+                          " (" + nodes.Count + " nodes)"),
                 Enabled = false,
                 Icon = IconQuality
             });
@@ -2571,7 +3364,7 @@ namespace Oxide.Plugins
             }
             else if (allOwned)
             {
-                buyTooltip = "You already have this permission.";
+                buyTooltip = "You already have this permission permanently.";
             }
             else if (!canGrant)
             {
@@ -2581,19 +3374,34 @@ namespace Oxide.Plugins
             {
                 buyTooltip = "You must be online.";
             }
-            else if (dukes < product.Price)
+            else if (dukes < price)
             {
-                buyTooltip = "Need " + FormatNumber(product.Price) + " dukes.";
+                buyTooltip = "Need " + FormatNumber(price) + " dukes.";
+            }
+            else if (temporary)
+            {
+                buyTooltip = (activeTemp > 0 ? "Renew for " : "Buy ") + FormatNumber(price) +
+                             " dukes (+" + FormatDuration(hours) + ").";
             }
             else
             {
-                buyTooltip = "Buy for " + FormatNumber(product.Price) + " dukes.";
+                buyTooltip = "Buy for " + FormatNumber(price) + " dukes.";
+            }
+
+            string buyLabel;
+            if (temporary)
+            {
+                buyLabel = activeTemp > 0 ? "Renew " + FormatDuration(hours) : "Rent " + FormatDuration(hours);
+            }
+            else
+            {
+                buyLabel = "Buy Permanent";
             }
 
             buttons.Add(new ButtonInfo
             {
                 Action = "buypermission|" + product.Id,
-                Label = "Buy Permission",
+                Label = buyLabel,
                 Enabled = buyEnabled,
                 Tooltip = buyTooltip,
                 Icon = IconGive
@@ -2603,6 +3411,222 @@ namespace Oxide.Plugins
                 Action = "back",
                 Label = "Back",
                 Tooltip = "Return to the permission list.",
+                Icon = IconBack
+            });
+            buttons.Add(new ButtonInfo
+            {
+                Action = "home",
+                Label = "Categories",
+                Tooltip = "Return to the category list.",
+                Icon = IconShop
+            });
+            buttons.Add(new ButtonInfo
+            {
+                Action = "refresh",
+                Label = "Refresh",
+                Tooltip = "Redraw this page.",
+                Icon = IconRefresh
+            });
+        }
+
+        private void RenderPermissionManage(string playerId, Session session, List<RowInfo> rows,
+            List<ButtonInfo> buttons, out string subtitle)
+        {
+            int pages = Math.Max(1, (permissionProducts.Count + UiRows - 1) / UiRows);
+            if (session.Page < 0)
+            {
+                session.Page = 0;
+            }
+            else if (session.Page >= pages)
+            {
+                session.Page = pages - 1;
+            }
+
+            subtitle = "Manage Permission Prices  |  " + permissionProducts.Count + " product" +
+                       (permissionProducts.Count == 1 ? string.Empty : "s") +
+                       "  |  page " + (session.Page + 1) + "/" + pages;
+
+            int start = session.Page * UiRows;
+            for (int i = 0; i < UiRows && start + i < permissionProducts.Count; i++)
+            {
+                PermissionProduct product = permissionProducts[start + i];
+                int tempPrice = GetTemporaryPrice(product);
+                int tempHours = GetTemporaryHours(product);
+                string sub = "Permanent " + FormatNumber(GetPermanentPrice(product)) + "  |  Temp " +
+                             FormatNumber(tempPrice) + " / " + FormatDuration(tempHours) +
+                             (product.Enabled ? string.Empty : "  |  disabled");
+
+                rows.Add(new RowInfo
+                {
+                    Action = "permedit|" + product.Id,
+                    Label = product.Name,
+                    Sub = Clean(sub, 200),
+                    Enabled = true,
+                    Icon = product.Enabled ? IconManage : IconWarning,
+                    Badge = product.Enabled ? "EDIT" : "OFF"
+                });
+            }
+
+            if (permissionProducts.Count == 0)
+            {
+                rows.Add(new RowInfo
+                {
+                    Label = "No permission products are configured.",
+                    Sub = "Add PermissionProducts to oxide/config/AdminShop.json.",
+                    Enabled = false,
+                    Icon = IconWarning,
+                    Badge = "NONE"
+                });
+            }
+
+            buttons.Add(new ButtonInfo
+            {
+                Action = "back",
+                Label = "Back",
+                Tooltip = "Return to the permission categories.",
+                Icon = IconBack
+            });
+            buttons.Add(new ButtonInfo
+            {
+                Action = "home",
+                Label = "Categories",
+                Tooltip = "Return to the category list.",
+                Icon = IconShop
+            });
+
+            if (session.Page > 0)
+            {
+                buttons.Add(new ButtonInfo
+                {
+                    Action = "page|prev",
+                    Label = "< Prev",
+                    Tooltip = "Previous page.",
+                    Icon = IconBack
+                });
+            }
+
+            if (session.Page < pages - 1)
+            {
+                buttons.Add(new ButtonInfo
+                {
+                    Action = "page|next",
+                    Label = "Next >",
+                    Tooltip = "Next page.",
+                    Icon = IconBack
+                });
+            }
+
+            buttons.Add(new ButtonInfo
+            {
+                Action = "refresh",
+                Label = "Refresh",
+                Tooltip = "Redraw this list.",
+                Icon = IconRefresh
+            });
+        }
+
+        private void RenderPermissionEdit(string playerId, Session session, List<RowInfo> rows,
+            List<ButtonInfo> buttons, out string subtitle)
+        {
+            PermissionProduct product = GetSelectedPermissionProduct(session);
+            if (product == null)
+            {
+                session.Screen = "permissionmanage";
+                session.SelectedPermissionId = null;
+                RenderPermissionManage(playerId, session, rows, buttons, out subtitle);
+                return;
+            }
+
+            int tempPrice = GetTemporaryPrice(product);
+            int tempHours = GetTemporaryHours(product);
+            string autoNote = product.TemporaryPrice > 0 ? "custom" : "auto (1/10 of permanent)";
+
+            subtitle = "Editing '" + product.Name + "'  |  changes save immediately";
+
+            rows.Add(new RowInfo
+            {
+                Label = "Product",
+                Sub = product.Name + "  (" + product.Id + ")",
+                Enabled = false,
+                Icon = IconPermissions
+            });
+            rows.Add(new RowInfo
+            {
+                Label = "Permanent Price",
+                Sub = FormatNumber(GetPermanentPrice(product)) + " dukes",
+                Enabled = false,
+                Icon = IconPrice
+            });
+            rows.Add(new RowInfo
+            {
+                Label = "Temporary Price",
+                Sub = FormatNumber(tempPrice) + " dukes  |  " + autoNote,
+                Enabled = false,
+                Icon = IconPrice
+            });
+            rows.Add(new RowInfo
+            {
+                Label = "Temporary Duration",
+                Sub = FormatDuration(tempHours) +
+                      (product.TemporaryHours > 0 ? " (per product)" : " (global default)"),
+                Enabled = false,
+                Icon = IconTempPermission
+            });
+            rows.Add(new RowInfo
+            {
+                Label = "Enabled",
+                Sub = product.Enabled ? "yes" : "no",
+                Enabled = false,
+                Icon = product.Enabled ? IconOwned : IconWarning,
+                Badge = product.Enabled ? "ON" : "OFF"
+            });
+
+            rows.Add(new RowInfo
+            {
+                Action = "permeditfield|price",
+                Label = "Set Permanent Price",
+                Sub = "Type a duke amount for the permanent grant.",
+                Enabled = true,
+                Icon = IconPrice
+            });
+            rows.Add(new RowInfo
+            {
+                Action = "permeditfield|tempprice",
+                Label = "Set Temporary Price",
+                Sub = "Type a duke amount, or 0 for auto (1/10 permanent).",
+                Enabled = true,
+                Icon = IconPrice
+            });
+            rows.Add(new RowInfo
+            {
+                Action = "permeditfield|tempduration",
+                Label = "Set Temporary Duration",
+                Sub = "Type hours (1-" + MaxTemporaryHours + "), or 0 for global default.",
+                Enabled = true,
+                Icon = IconTempPermission
+            });
+            rows.Add(new RowInfo
+            {
+                Action = "permauto",
+                Label = "Reset Temporary Price To Auto",
+                Sub = "Use one tenth of the permanent price.",
+                Enabled = product.TemporaryPrice > 0,
+                Icon = IconRefresh
+            });
+            rows.Add(new RowInfo
+            {
+                Action = "permtoggle",
+                Label = product.Enabled ? "Disable Product" : "Enable Product",
+                Sub = "Toggle whether players can buy this product.",
+                Enabled = true,
+                Icon = product.Enabled ? IconWarning : IconOwned
+            });
+
+            buttons.Add(new ButtonInfo
+            {
+                Action = "back",
+                Label = "Back",
+                Tooltip = "Return to the manage list.",
                 Icon = IconBack
             });
             buttons.Add(new ButtonInfo
@@ -2711,6 +3735,7 @@ namespace Oxide.Plugins
                         TryRegisterHook();
                         Reply(player, "Reloaded config and rebuilt the catalog (" +
                                       (catalog != null ? catalog.All.Count : 0) + " items, " +
+                                      skippedCheapItems + " below MinItemPrice skipped, " +
                                       permissionProducts.Count + " permission products).");
                         return;
 
@@ -2730,8 +3755,9 @@ namespace Oxide.Plugins
                         }
 
                         Reply(player, "Catalog: " + (catalog != null ? catalog.All.Count : 0) +
-                                      " items, " + permissionProducts.Count + " permission products. Currency: " +
-                                      config.CurrencyItem + ".");
+                                      " items (" + skippedCheapItems + " below MinItemPrice " +
+                                      config.MinItemPrice + " skipped), " + permissionProducts.Count +
+                                      " permission products. Currency: " + config.CurrencyItem + ".");
                         return;
 
                     case "perms":
@@ -2764,7 +3790,7 @@ namespace Oxide.Plugins
                 return;
             }
 
-            if (catalog == null)
+            if (!catalogBuilt || catalog == null)
             {
                 BuildCatalog(false);
             }
@@ -2777,7 +3803,7 @@ namespace Oxide.Plugins
 
         private void CommandPrice(IPlayer player, string[] args)
         {
-            if (catalog == null)
+            if (!catalogBuilt || catalog == null)
             {
                 BuildCatalog(false);
             }
@@ -2809,7 +3835,7 @@ namespace Oxide.Plugins
                 return;
             }
 
-            Reply(player, "Permission products:");
+            Reply(player, "Permission products (permanent / temporary):");
             for (int i = 0; i < permissionProducts.Count; i++)
             {
                 PermissionProduct product = permissionProducts[i];
@@ -2819,10 +3845,29 @@ namespace Oxide.Plugins
                 string status = !product.Enabled
                     ? "disabled"
                     : (canGrant ? "ready" : "unavailable: " + reason);
+                int tempPrice = GetTemporaryPrice(product);
+                int tempHours = GetTemporaryHours(product);
 
-                Reply(player, "  " + product.Id + " | " + product.Name + " | " +
-                              FormatNumber(product.Price) + " dukes | " + status + " | " +
+                Reply(player, "  " + product.Id + " | " + product.Name + " | perm " +
+                              FormatNumber(GetPermanentPrice(product)) + " dukes | temp " +
+                              FormatNumber(tempPrice) + " dukes / " + FormatDuration(tempHours) +
+                              " | " + status + " | " +
                               (nodes.Count == 0 ? "(no nodes)" : string.Join(", ", nodes.ToArray())));
+            }
+
+            if (temporaryData != null && temporaryData.Grants != null && temporaryData.Grants.Count > 0)
+            {
+                long now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+                int active = 0;
+                for (int i = 0; i < temporaryData.Grants.Count; i++)
+                {
+                    if (temporaryData.Grants[i] != null && temporaryData.Grants[i].ExpiresAt > now)
+                    {
+                        active++;
+                    }
+                }
+
+                Reply(player, "Active temporary grants: " + active + " of " + temporaryData.Grants.Count + ".");
             }
         }
 
@@ -2985,6 +4030,7 @@ namespace Oxide.Plugins
             public string Query = string.Empty;
             public string SelectedId;
             public string SelectedPermissionId;
+            public string PermissionMode = PermModePermanent;
             public int Page;
             public string InputMode;
             public string InputLabel = string.Empty;
@@ -3095,6 +4141,8 @@ namespace Oxide.Plugins
             public int ItemQuality = 6;
             public string CurrencyItem = "casinoCoin";
             public int MaxQuantityPerPurchase = 1000;
+            public int MinItemPrice = 500;
+            public int TemporaryPermissionHours = 24;
             public bool IncludeBlocks = true;
             public bool IncludeCreativeItems = false;
             public bool IncludeHiddenItems = false;
@@ -3115,7 +4163,22 @@ namespace Oxide.Plugins
             public string Permission = string.Empty;
             public List<string> Permissions = new List<string>();
             public int Price = 0;
+            public int TemporaryPrice = 0;
+            public int TemporaryHours = 0;
             public bool Enabled = true;
+        }
+
+        private sealed class TemporaryPermissionData
+        {
+            public List<TemporaryGrant> Grants = new List<TemporaryGrant>();
+        }
+
+        private sealed class TemporaryGrant
+        {
+            public string PlayerId = string.Empty;
+            public string Permission = string.Empty;
+            public string ProductId = string.Empty;
+            public long ExpiresAt;
         }
 
         #endregion

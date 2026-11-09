@@ -200,8 +200,12 @@ oxide/config/PlayerProfiles.json:
   ChunkBytes                 Profile payload chunk size. Default 24576.
   BackupCount                0-2 rotating backups per profile file. Default 2.
   ArchiveDeletedProfiles     Copy deleted payloads to deleted/ before removing.
-  RequireSameModSet          Refuse to switch to a profile saved with a
-                             different mod set. Default true.
+  ModCompatibility           Strict | Additive | Ignore. Default Additive.
+                             Strict: exact mod-set hash, the old behavior.
+                             Additive: allow new mods that only append items;
+                             block mods that shift existing item IDs.
+                             Ignore: allow every mod change. Risky; use only
+                             after backing up oxide/data/PlayerProfiles.
   RequireSameGameVersion     Refuse to switch across game versions. Default
                              false (7DTD can usually read older files).
   Debug                      Extra log lines for captures and switches.
@@ -227,8 +231,9 @@ The plugin never edits the live vanilla .ttp in place. It writes a temporary
 file and replaces the target atomically. The vanilla save is the fallback copy.
 
 state.json holds the profile names, IDs, active profile, pending switch,
-metadata (level, deaths, playtime, bytes, saved time, game version and mod set
-hash) and the player name. It does not hold permissions.
+metadata (level, deaths, playtime, bytes, saved time, game version, mod set
+hash, item count and item-map hash) and the player name. It does not hold
+permissions.
 
 
 SWITCH FLOW (IN PLACE)
@@ -299,6 +304,49 @@ CRASH AND DISCONNECT SAFETY
     never allowed to lock a player out; vanilla fallbacks still apply.
 
 
+ADDING MODS LATER
+-----------------
+
+Each profile stores an item-map fingerprint: the number of item entries at save
+time and a hash of their names in ID order. Additive mode uses that instead of
+requiring the exact same mod list.
+
+Safe:
+  A new mod that only appends items, loaded after the existing item mods.
+
+Unsafe:
+  A new mod that inserts items before existing mods, removes items, or renames
+  existing items. Old IDs would point at different items.
+
+Steps:
+
+  1. Back up oxide/data/PlayerProfiles and the world player .ttp files.
+  2. Stop the server.
+  3. Add the mod.
+  4. If it adds items, make its folder sort after existing item mods. 7DTD
+     loads mods by folder name; a ZZ_ prefix is a simple way to load last.
+  5. Start the server. The active profile loads with the new item table. If the
+     new mod is not additive, the active character can still be mis-mapped;
+     only a backup can recover that.
+  6. Switch to another profile. Additive mode compares the stored item map:
+       prefix matches  -> switch allowed, no wipe
+       prefix differs  -> blocked with the item-ID error
+     Reorder the new mod, or set ModCompatibility to Ignore after a backup.
+  7. The profile's item map is refreshed on the next save or switch.
+
+Profiles created before this version have no item-map metadata. Additive mode
+allows them once with a warning and records the current map on the next save.
+Strict mode still blocks them by mod hash.
+
+Ignore mode skips the profile check. It does not repair items that were
+already mis-mapped; restore a profile backup or delete the profile in that
+case. It still requires every client to have the same current item table as
+the server for an in-place switch; install the same mods everywhere.
+
+The server's item table is cached after startup. If you add or remove item
+mods, restart the server rather than using a hot-reload for the item XML.
+
+
 TROUBLESHOOTING
 ---------------
 
@@ -320,9 +368,17 @@ The card opens but says "reconnect required" for every switch.
   path (delete the client-mod capability by using an old mod, or wait for it to
   respawn), or reconnect after selecting it.
 
+"The current mods change existing item IDs, not just add new items."
+  A newly added item mod inserted items before existing item mods, so old
+  item IDs no longer point at the same items. Reorder or rename the new mod
+  folder so it loads after the existing item mods (for example prefix it with
+  ZZ_), or set ModCompatibility to Ignore after backing up
+  oxide/data/PlayerProfiles. Ignore skips the check; it cannot repair items
+  that were already mis-mapped.
+
 "That profile was saved with a different mod set."
-  Item IDs are load-order integers. Restore the original mod set, or set
-  RequireSameModSet to false if you understand the risk.
+  This is the Strict mode message. Set ModCompatibility to Additive to allow
+  new mods that only append items, or restore the exact mod set.
 
 A new profile reset to level 1.
   This is expected for NewProfileStartsFresh. Set it to false if new profiles

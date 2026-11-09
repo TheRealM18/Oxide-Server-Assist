@@ -15,12 +15,13 @@ The core Server Assist product is documented separately:
 | [PermissionGui](administration/permission-gui.md) | 3.5.0 | Groups, users, tracks, defaults and a searchable permission browser |
 | [AdminSuite](administration/admin-suite.md) | 1.0.4 | Staff toolkit for players, moderation, inventory, world, logs, snapshots and rollback |
 | [AdminKits](administration/admin-kits.md) | 1.1.0 | Item kits with exact item data, cooldowns, limits and per-kit permissions |
+| [Sentinel AC](administration/sentinel-ac.md) | 1.0.2 | Statistical anti-cheat, anti-exploit and anti-grief evidence with staff review |
 
 ## Economy
 
 | Plugin | Version | Purpose |
 |---|---|---|
-| [Admin Shop](economy/admin-shop.md) | 1.1.1 | Sell game items and permission products for dukes |
+| [Admin Shop](economy/admin-shop.md) | 1.2.0 | Sell game items plus permanent or temporary permission products for dukes |
 | [Auction House](economy/auction-house.md) | 1.1.1 | Player listings, buyout purchases, fees and admin controls |
 
 ## Player features
@@ -37,7 +38,8 @@ The core Server Assist product is documented separately:
 | Plugin | Version | Purpose |
 |---|---|---|
 | [Plugin Hot Reload](utilities/plugin-hot-reload.md) | 1.0.1 | Watches and reloads Oxide plugins, with filters, history and commands |
-| [Twitch Integration](utilities/twitch-integration.md) | 0.2.1 | Twitch linking, tiers, loadouts and viewer-triggered effects |
+| [Media Integration](utilities/media-integration.md) | 0.3.0 | Platform-neutral successor to TwitchIntegration; Twitch + signed custom webhooks |
+| [Twitch Integration](utilities/twitch-integration.md) | 0.2.1 | Legacy Twitch-only implementation and rollback path |
 | [BuggeeNet](utilities/buggee-net.md) | 0.2.0 | Redis-backed fleet registry, redirects and shared player state |
 
 ## Client mods
@@ -52,7 +54,8 @@ The core Server Assist product is documented separately:
 | Program | Version | Purpose |
 |---|---|---|
 | [QLN Pack Server](programs/qln-pack-server.md) | not declared | Serves the server's client mod pack and manifest |
-| [TwitchRelay](programs/twitch-relay.md) | 0.1.1 | Twitch EventSub, OAuth token vault and per-server event queues |
+| [MediaRelay](programs/media-relay.md) | 0.3.0 | MediaIntegration relay: Twitch EventSub, custom webhooks and event queues |
+| [TwitchRelay](programs/twitch-relay.md) | 0.1.1 | Legacy Twitch EventSub relay |
 
 ## Art and assets
 

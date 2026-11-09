@@ -21,7 +21,7 @@
   "ChunkBytes": 24576,
   "BackupCount": 2,
   "ArchiveDeletedProfiles": true,
-  "RequireSameModSet": true,
+  "ModCompatibility": "Additive",
   "RequireSameGameVersion": false,
   "Debug": false
 }
