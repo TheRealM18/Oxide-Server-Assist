@@ -451,7 +451,7 @@ workspace it was verified with a temporary `net48` harness that compiles
 Source hashes at the handoff snapshot:
 
 ```text
-PlayerProfiles.cs        ACE0A42ADC0E3E6EDECA2212FFD114160E0D3D45609169D5209FC27535CD0CFF
+PlayerProfiles.cs        4A14E3DC785A736395FCA60983CB6C40230CE78CFF63EB020D0E9C66EEE7CC77
 ServerAssist.cs          C2AB8843E4D5D71609B2D13103A237E79E98E47F6891F16B20D8CCE78C7C81FA
 PlayerProfilesClient.cs  1403C456394A2A8225AA55BAD1ACAC7526EEB3ECF8379E8C41CE0EAF62549F3E
 ServerAssistClient.cs    05A4BC99D628B291D89C6088FEC742F568ED03FBEB03E822B7B9E882A422F7FD
@@ -622,5 +622,6 @@ the seamless patches to function.
 - If the Server Assist agent wants to expose a generic companion-protocol API
   later, `@pp|` is reserved for PlayerProfiles; use a different prefix for
   another protocol.
+
 
 
