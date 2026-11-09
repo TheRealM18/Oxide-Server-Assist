@@ -1,0 +1,6 @@
+relay/bin/
+relay/obj/
+relay/relay.json
+relay/data/
+tests/PluginCompile/bin/
+tests/PluginCompile/obj/

@@ -1,0 +1,16 @@
+{
+  "ChatPrefix": "[Kits]",
+  "HookLabel": "Admin Kits",
+  "HookDescription": "Create, manage and collect server kits.",
+  "HookPermission": "adminkits.use",
+  "GrantUseToDefaultGroup": true,
+  "DefaultCooldownMinutes": 0,
+  "DefaultMaxUses": 0,
+  "DefaultMaxPerPlayer": 0,
+  "DefaultItemQuality": 1,
+  "ClearInventoryOnCapture": false,
+  "CaptureEquipment": true,
+  "LogClaims": true,
+  "MaxKits": 100,
+  "MaxItemsPerKit": 50
+}

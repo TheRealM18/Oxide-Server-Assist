@@ -1,0 +1,25 @@
+# Local development Redis for the BuggeeNet milestone-B fleet.
+# Production (rented Linux servers) uses the same image but different bind/auth — see README.
+services:
+  redis:
+    image: redis:7.4-alpine
+    container_name: buggee-redis
+    restart: unless-stopped
+    command: ["redis-server", "/usr/local/etc/redis/redis.conf"]
+    ports:
+      # Dev: localhost only. Never publish Redis on 0.0.0.0 without a firewall + auth.
+      - "127.0.0.1:6379:6379"
+    volumes:
+      - ./redis.conf:/usr/local/etc/redis/redis.conf:ro
+      - buggee-redis-data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a \"$${REDIS_PASSWORD}\" ping | grep -q PONG"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 5s
+    environment:
+      REDIS_PASSWORD: buggee_dev_only_change_me
+
+volumes:
+  buggee-redis-data:

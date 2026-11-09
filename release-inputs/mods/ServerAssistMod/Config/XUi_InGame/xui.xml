@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<configs>
+	<append xpath="/xui">
+		<window_group name="serverAssist" controller="ServerAssistWindowGroup, ServerAssistMod" close_compass_on_open="true">
+			<window name="windowServerAssist" />
+		</window_group>
+	</append>
+</configs>
+
+
+

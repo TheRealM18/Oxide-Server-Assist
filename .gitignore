@@ -1,0 +1,23 @@
+# Build output
+**/bin/
+**/obj/
+**/dist/
+**/publish/
+.vs/
+*.user
+*.suo
+
+# Local release output and virtual environments
+release-out/
+site/
+.venv/
+__pycache__/
+
+# Archives and local packages
+*.zip
+*.tar.gz
+*.7z
+
+# OS noise
+Thumbs.db
+.DS_Store

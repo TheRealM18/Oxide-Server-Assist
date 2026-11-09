@@ -1,0 +1,207 @@
+PERMISSION GUI 3.x - SETUP TEMPLATE
+===================================
+
+PermissionGui 3.x is a full ServerAssist permission manager. It uses only
+Oxide's permission data. Tracks are stored in oxide/config/PermissionGui.json.
+oxide/data/PermissionGui/data.json is no longer used.
+
+
+CONFIG
+------
+oxide/config/PermissionGui.json
+
+{
+  "ChatPrefix": "Permissions:",
+  "DefaultGroup": "default",
+  "DefaultPermissions": [
+    "permissiongui.use"
+  ],
+  "ApplyDefaultsOnLoad": true,
+  "ApplyDefaultsOnPlayerConnect": true,
+  "GrantDefaultsDirectlyToPlayer": true,
+  "CreateDefaultGroup": true,
+  "GrantAdminPermissionsToAdminGroup": true,
+  "AdminWildcard": "oxide.*",
+  "RequireWildcardForAdmin": true,
+  "GrantAllPermissionsToAdmin": true,
+  "AutoGrantUse": [],
+  "AutoGrantAdmin": [
+    "76561198044563889"
+  ],
+  "Tracks": {
+    "staff": [
+      "default"
+    ]
+  },
+  "MaxRows": 10
+}
+
+Find your exact id with:
+
+    /perm whoami
+
+or in the F1 console:
+
+    listplayers
+
+
+ADMIN ACCESS - oxide.*
+----------------------
+Full admin access requires BOTH:
+
+    permissiongui.admin
+    oxide.*
+
+The special admin grant adds both:
+
+  - GrantAdminPermissionsToAdminGroup (Oxide admin group)
+  - AutoGrantAdmin (specific SteamID64s)
+
+If GrantAllPermissionsToAdmin is true it also grants every registered
+permission through Oxide's "*" expansion.
+
+Putting permissiongui.admin in DefaultPermissions does NOT make someone a full
+admin. They still need oxide.*. This is intentional.
+
+
+DEFAULTS
+--------
+On load and/or player connect:
+
+  - Ensure DefaultGroup exists.
+  - Grant DefaultPermissions to DefaultGroup.
+  - Mirror them directly to the player when GrantDefaultsDirectlyToPlayer is on.
+  - Apply AutoGrantUse / AutoGrantAdmin.
+  - ApplyDefaultsOncePerPlayer defaults to true: once a player has received the
+    defaults, removing the default group/permission is permanent. Use Defaults
+    -> Apply Now or /perm apply to reapply deliberately, or
+    /perm defaults reset <player|all> to clear the markers.
+  - AddDefaultGroupForTrackUsers defaults to false: a tracked player keeps only
+    the track group unless the default group is itself in the ladder.
+
+Use /perm adddefault, /perm removedefault, /perm setdefaultgroup,
+/perm defaults reset <player|all>, or the ServerAssist Defaults page.
+
+
+GUI
+---
+F7 -> Permission Manager
+
+Pages:
+
+  Groups
+    - create, rename, delete
+    - title, rank, parent
+    - members
+    - permissions with search
+
+  Users
+    - filter known online/offline users
+    - groups
+    - direct permissions
+    - effective permissions
+    - tracks (enroll/promote/demote)
+    - temp permissions (add with a duration, list, remove)
+
+  Tracks
+    - create/delete
+    - add/remove ladder groups
+    - enroll/promote/demote users
+
+  Permissions
+    - search all registered permissions
+    - select a permission
+    - add/remove it from a group or user
+
+  Defaults
+    - add/remove default permissions
+    - set default group
+    - apply now
+    - reload config
+
+Every page has a text field. On list/permission pages it is a search/filter box.
+On edit buttons it becomes the prompt for that edit.
+
+
+TEMPORARY PERMISSIONS
+---------------------
+Temp permissions are direct user grants with an expiry, stored in
+oxide/data/PermissionGui/state.json.
+
+    /perm temp <player> <permission> <duration>
+    /perm temp remove <player> <permission>
+    /perm temp list [player]
+
+GUI: User -> Temp Perms -> Add Temp, then enter the permission and duration.
+Durations: 30s, 15m, 2h, 7d, 2w, 1d12h. A bare number means minutes.
+An expiry timer runs every 30 seconds.
+
+
+PERMISSION / COMMAND SEARCH
+---------------------------
+ServerAssist -> Permission Search, or:
+
+    /perm search <text>
+    /perm node <text>
+
+/perm search splits output into "Grantable permission nodes" (NODE: ...) and
+"Commands" (CMD: ... | NODE: ... or NONE). /perm node is a focused lookup: it
+prints the exact node when a registered permission matches, otherwise the
+closest command matches and whether they have a real Oxide permission node.
+
+The index includes:
+  - Oxide registered permissions (and owning plugin when resolvable)
+  - Oxide plugin commands and their PermissionsRequired nodes
+  - 7DTD and mod console commands from SdtdConsole, with aliases, description,
+    source class/assembly and effective admin level
+  - serveradmin.xml command permission entries
+
+Select a permission row to add/remove it from a group/user. Select a command row
+to see details. 7DTD/mod console commands use admin levels, not Oxide permission
+nodes; both the search output and GUI state NODE: NONE for those commands.
+Permission rows use one of three category icons: sa_nav_server for oxide.*
+nodes, sa_nav_world for 7daystodie.* / game.* nodes and for both 7DTD command
+types (SdtdConsole and serveradmin.xml), and sa_plugin_hot_reload for every
+other registered plugin node. These ship in AAZ_ServerAssistArt 1.1.0 or newer.
+The PermissionGui home and sub-menu rows use the nav/act set. Action buttons
+remain text-only.
+
+Space-separated search terms are OR terms. It cannot discover a mod that uses a
+private permission system and never registers an Oxide permission or a console
+command.
+
+
+DATA
+----
+Oxide-only:
+
+    oxide/data/oxide.users.data
+    oxide/data/oxide.groups.data
+    oxide/config/PermissionGui.json   (defaults, auto-grants, tracks)
+    oxide/data/PermissionGui/state.json  (once-only markers, temp permissions)
+
+Not used:
+
+    oxide/data/PermissionGui/data.json
+
+Delete the legacy file with:
+
+    /perm cleanup
+
+
+VERIFY
+------
+Server log:
+
+    Loaded plugin PermissionGui v3.5.0
+
+In game:
+
+    /perm whoami
+    /perm data
+    /permgui
+
+Your character needs to be in Oxide's admin group or listed in AutoGrantAdmin.
+Both paths receive permissiongui.use, permissiongui.admin, oxide.*, and all
+registered permissions when GrantAllPermissionsToAdmin is true.
+

@@ -1,0 +1,23 @@
+{
+  "clientId": "YOUR_TWITCH_CLIENT_ID",
+  "clientSecret": "YOUR_TWITCH_CLIENT_SECRET",
+  "eventSubUrl": "wss://eventsub.wss.twitch.tv/ws",
+  "listen": "http://127.0.0.1:8090",
+  "dataDir": "data",
+  "linkSessionMinutes": 10,
+  "eventRetentionHours": 72,
+  "maxEventsPerServer": 2000,
+  "httpTimeoutSeconds": 20,
+  "reconcileMinutes": 5,
+  "enableChat": false,
+  "enableFollows": true,
+  "enableHypeTrain": true,
+  "requestManageRedemptions": false,
+  "servers": [
+    {
+      "id": "main",
+      "name": "Main Server",
+      "apiKey": "GENERATE_A_LONG_RANDOM_KEY"
+    }
+  ]
+}

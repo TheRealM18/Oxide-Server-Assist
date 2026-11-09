@@ -1,0 +1,40 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net48</TargetFramework>
+    <AssemblyName>TwitchIntegrationPluginCompileCheck</AssemblyName>
+    <RootNamespace>TwitchIntegrationPluginCompileCheck</RootNamespace>
+    <LangVersion>latest</LangVersion>
+    <Nullable>disable</Nullable>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <OutputPath>$(MSBuildProjectDirectory)\bin\</OutputPath>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <DebugType>none</DebugType>
+    <NoStdLib>true</NoStdLib>
+    <DisableImplicitFrameworkReferences>true</DisableImplicitFrameworkReferences>
+    <GameDir Condition="'$(GameDir)' == ''">C:\Program Files (x86)\Steam\steamapps\common\7 Days To Die</GameDir>
+    <ServerDir Condition="'$(ServerDir)' == ''">C:\Users\robert\Downloads\Oxide.SevenDaysToDie\7DaysToDieServer_Data\Managed</ServerDir>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="..\..\oxide\plugins\TwitchIntegration.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="mscorlib"><HintPath>$(GameDir)\7DaysToDie_Data\Managed\mscorlib.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="System"><HintPath>$(GameDir)\7DaysToDie_Data\Managed\System.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="System.Core"><HintPath>$(GameDir)\7DaysToDie_Data\Managed\System.Core.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="System.Xml"><HintPath>$(GameDir)\7DaysToDie_Data\Managed\System.Xml.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="System.Runtime"><HintPath>$(GameDir)\7DaysToDie_Data\Managed\System.Runtime.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="netstandard"><HintPath>$(GameDir)\7DaysToDie_Data\Managed\netstandard.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="Assembly-CSharp"><HintPath>$(ServerDir)\Assembly-CSharp.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.CoreModule"><HintPath>$(GameDir)\7DaysToDie_Data\Managed\UnityEngine.CoreModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine"><HintPath>$(GameDir)\7DaysToDie_Data\Managed\UnityEngine.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="Oxide.Core"><HintPath>$(ServerDir)\Oxide.Core.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="Oxide.CSharp"><HintPath>$(ServerDir)\Oxide.CSharp.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="Oxide.Common"><HintPath>$(ServerDir)\Oxide.Common.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="Oxide.References"><HintPath>$(ServerDir)\Oxide.References.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="Oxide.SevenDaysToDie"><HintPath>$(ServerDir)\Oxide.SevenDaysToDie.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="Oxide.Unity"><HintPath>$(ServerDir)\Oxide.Unity.dll</HintPath><Private>false</Private></Reference>
+  </ItemGroup>
+</Project>

@@ -1,0 +1,19 @@
+* text=auto
+
+*.cs text
+*.csproj text
+*.md text
+*.yml text
+*.yaml text
+*.json text
+*.xml text
+*.ps1 text
+
+*.dll binary
+*.exe binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.zip binary
+*.tar.gz binary

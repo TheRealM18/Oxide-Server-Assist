@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xml>
+  <Name value="ServerAssist" />
+  <DisplayName value="Server Assist" />
+  <Description value="Server Assist 2.1: a left-sidebar server tools board with art cards, item icons, permission-aware buttons, optional plugin panels/providers, and page-based companion panels such as DynamicBackpack." />
+  <Author value="TheRealM18" />
+  <Version value="2.1.0" />
+  <Website value="" />
+  <SkipWithAntiCheat value="true" />
+</xml>
+
+

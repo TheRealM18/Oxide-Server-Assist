@@ -1,0 +1,184 @@
+{
+  "ConfigVersion": 3,
+  "ChatPrefix": "[Twitch]",
+  "GrantUseToDefaultGroup": true,
+  "GrantAdminToAdminGroup": true,
+  "GrantStreamerOnLink": true,
+  "RevokeStreamerOnUnlink": true,
+  "StreamerGroup": "twitch",
+  "StreamerGroupTitle": "Twitch Streamer",
+  "StreamerGroupRank": 0,
+  "HookLabel": "Twitch",
+  "HookDescription": "Link Twitch, choose reward shortlists, and see what can trigger.",
+  "HookPermission": "twitch.use",
+  "PanelIcon": "sprite:sa_stream_panel",
+  "PanelOrder": 40,
+  "Icons": {
+    "Panel": "sprite:sa_stream_panel",
+    "Home": "sprite:sa_stream_home",
+    "Tier": "ui_game_symbol_star",
+    "Tier1": "sprite:sa_stream_tier_1",
+    "Tier2": "sprite:sa_stream_tier_2",
+    "Tier3": "sprite:sa_stream_tier_3",
+    "Buff": "ui_game_symbol_twitch_buffs",
+    "Debuff": "ui_game_symbol_twitch_debuffs",
+    "Reward": "sprite:sa_stream_reward",
+    "Loadout": "sprite:sa_stream_loadout",
+    "LoadoutArmed": "sprite:sa_stream_loadout_armed",
+    "LoadoutEmpty": "sprite:sa_stream_loadout_empty",
+    "LoadoutLocked": "ui_game_symbol_lock",
+    "Catalog": "sprite:sa_stream_catalog",
+    "Info": "sprite:sa_nav_help",
+    "Link": "sprite:sa_stream_link",
+    "LinkPending": "sprite:sa_stream_link_pending",
+    "Linked": "sprite:sa_stream_linked",
+    "Unlink": "sprite:sa_stream_unlink",
+    "LinkCancel": "sprite:sa_stream_link_cancel",
+    "SlotBuff": "sprite:sa_stream_slot_buff",
+    "SlotDebuff": "sprite:sa_stream_slot_debuff",
+    "SlotReward": "sprite:sa_stream_slot_reward",
+    "Admin": "plugin:AdminSuite",
+    "AdminReload": "plugin:PluginHotReload",
+    "AdminReconcile": "sprite:sa_plugin_hot_reload",
+    "AdminLinks": "plugin:PermissionGui",
+    "AdminPlayers": "sprite:sa_nav_players",
+    "Audit": "sprite:sa_nav_logs",
+    "Relay": "sprite:sa_nav_server",
+    "RelayOnline": "sprite:sa_nav_server",
+    "RelayOffline": "sprite:sa_nav_server",
+    "RelayPending": "sprite:sa_nav_server",
+    "Test": "sprite:sa_announce_test",
+    "TestBits": "item:casinoCoin",
+    "TestSub": "ui_game_symbol_star",
+    "TestPoints": "item:casinoCoin",
+    "StatusArmed": "ui_game_symbol_check",
+    "StatusPaused": "ui_game_symbol_clock",
+    "StatusOptedOut": "ui_game_symbol_x",
+    "TriggerSupport": "sprite:sa_stream_trigger_support",
+    "TriggerSub": "sprite:sa_stream_trigger_sub",
+    "TriggerResub": "sprite:sa_stream_trigger_resub",
+    "TriggerGiftSub": "sprite:sa_stream_trigger_gift_sub",
+    "TriggerPoints": "sprite:sa_stream_trigger_points",
+    "TriggerAutoReward": "sprite:sa_stream_trigger_auto_reward",
+    "TriggerRaid": "sprite:sa_stream_trigger_raid",
+    "TriggerFollow": "sprite:sa_stream_trigger_follow",
+    "TriggerMomentum": "sprite:sa_stream_trigger_momentum",
+    "TriggerChat": "sprite:sa_stream_trigger_chat",
+    "TriggerAny": "sprite:sa_stream_trigger_any",
+    "TriggerCustom": "sprite:sa_stream_trigger_custom",
+    "Check": "ui_game_symbol_check",
+    "Cross": "ui_game_symbol_x",
+    "Lock": "ui_game_symbol_lock",
+    "Help": "sprite:sa_nav_help",
+    "Prev": "ui_game_symbol_arrow_left",
+    "Next": "ui_game_symbol_arrow_right",
+    "Refresh": "ui_game_symbol_refresh",
+    "Back": "ui_game_symbol_arrow_left"
+  },
+  "RelayUrl": "http://127.0.0.1:8090",
+  "ServerId": "main",
+  "ServerKey": "PASTE_THE_API_KEY_FROM_relay.json",
+  "PollIntervalSeconds": 3.0,
+  "LinkPollIntervalSeconds": 3.0,
+  "RequestTimeoutSeconds": 20.0,
+  "TierPermissionPrefix": "twitch.tier.",
+  "DefaultTierId": "tier1",
+  "RequireAllCategories": true,
+  "AllowBuffs": true,
+  "AllowDebuffs": true,
+  "AllowRewards": true,
+  "AllowAnonymousCheers": true,
+  "MaxEventAgeMinutes": 15,
+  "GlobalCooldownSeconds": 15,
+  "PerViewerCooldownSeconds": 60,
+  "MaxEffectsPerMinute": 10,
+  "QueueWhileOffline": false,
+  "PendingEffectTtlMinutes": 30,
+  "AnnounceEffects": true,
+  "FallbackToDefaultTier": true,
+  "FallbackEventTypes": ["bits", "sub", "gift_sub", "resub", "raid"],
+  "AllowedCommandPrefixes": ["buffplayer", "debuffplayer", "give", "chaos", "weather", "spawn", "say"],
+  "Tiers": [
+    {
+      "Id": "tier1",
+      "DisplayName": "Tier 1 - Spark",
+      "Description": "Small buffs, mild chaos, and starter supplies.",
+      "Permission": "twitch.tier.tier1",
+      "Enabled": true,
+      "Order": 10,
+      "Icon": "sprite:sa_stream_tier_1",
+      "MinPicks": 1,
+      "MaxPicks": 3,
+      "Buffs": [
+        {
+          "Id": "fast",
+          "Label": "Quick Feet",
+          "Description": "A short burst of movement speed.",
+          "Icon": "sprite:sa_stream_buff_quick_feet",
+          "Weight": 1,
+          "Actions": [
+            { "Type": "buff", "Value": "twitch_buffFast", "Count": 1, "Quality": 0, "DelaySeconds": 0.0 }
+          ]
+        },
+        {
+          "Id": "regen",
+          "Label": "Regeneration",
+          "Description": "Slow health regeneration.",
+          "Icon": "sprite:sa_stream_buff_regen",
+          "Weight": 1,
+          "Actions": [
+            { "Type": "buff", "Value": "twitch_regen", "Count": 1, "Quality": 0, "DelaySeconds": 0.0 }
+          ]
+        }
+      ],
+      "Debuffs": [
+        {
+          "Id": "slow",
+          "Label": "Heavy Legs",
+          "Description": "Movement speed is reduced.",
+          "Icon": "sprite:sa_stream_debuff_heavy_legs",
+          "Weight": 1,
+          "Actions": [
+            { "Type": "debuff", "Value": "twitch_buffSlow", "Count": 1, "Quality": 0, "DelaySeconds": 0.0 }
+          ]
+        },
+        {
+          "Id": "blur",
+          "Label": "Blurred Vision",
+          "Description": "The screen blurs.",
+          "Icon": "sprite:sa_stream_debuff_blurred_vision",
+          "Weight": 1,
+          "Actions": [
+            { "Type": "debuff", "Value": "twitch_buffBlur", "Count": 1, "Quality": 0, "DelaySeconds": 0.0 }
+          ]
+        }
+      ],
+      "Rewards": [
+        {
+          "Id": "dukes_100",
+          "Label": "100 Dukes",
+          "Description": "A small stack of Dukes.",
+          "Icon": "item:casinoCoin",
+          "Weight": 1,
+          "Actions": [
+            { "Type": "item", "Value": "casinoCoin", "Count": 100, "Quality": 0, "DelaySeconds": 0.0 }
+          ]
+        },
+        {
+          "Id": "bandages_3",
+          "Label": "3 First Aid Bandages",
+          "Description": "Basic medical supplies.",
+          "Icon": "item:medicalFirstAidBandage",
+          "Weight": 1,
+          "Actions": [
+            { "Type": "item", "Value": "medicalFirstAidBandage", "Count": 3, "Quality": 0, "DelaySeconds": 0.0 }
+          ]
+        }
+      ]
+    }
+  ],
+  "Triggers": [
+    { "Id": "bits_100", "Event": "bits", "Enabled": true, "TierId": "tier1", "MinAmount": 100, "RewardId": "", "RewardTitle": "", "MatchAnyReward": false, "SubTier": 0, "RequireGift": false, "RequireNotGift": false, "Phase": "", "Priority": 0, "CooldownSeconds": 0, "Description": "100 Bits" },
+    { "Id": "cp_any", "Event": "channel_points", "Enabled": true, "TierId": "tier1", "MinAmount": 0, "RewardId": "", "RewardTitle": "", "MatchAnyReward": true, "SubTier": 0, "RequireGift": false, "RequireNotGift": false, "Phase": "", "Priority": -10, "CooldownSeconds": 0, "Description": "Any channel point reward" }
+  ]
+}

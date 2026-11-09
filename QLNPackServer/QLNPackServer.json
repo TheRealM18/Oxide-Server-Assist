@@ -1,0 +1,24 @@
+{
+  "bindAddress": "0.0.0.0",
+  "port": 8765,
+  "publicBaseUrl": "",
+  "accessToken": "",
+  "modsPath": "Mods",
+  "cacheDir": "cache",
+  "include": [
+    "QuantumLogisticsNetwork"
+  ],
+  "exclude": [
+    "000_QLNPackBootstrap",
+    "0_TFP_Harmony",
+    "TFP_CommandExtensions",
+    "Xample_MarkersMod"
+  ],
+  "packVersion": "auto",
+  "gameVersion": "3.4",
+  "notes": "QLN server pack",
+  "remove": [],
+  "signingKeyXml": "",
+  "refreshSeconds": 30,
+  "logFile": "QLNPackServer.log"
+}

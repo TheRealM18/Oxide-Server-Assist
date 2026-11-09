@@ -1,0 +1,13 @@
+# Build output
+bin/
+obj/
+dist/
+release-out/
+
+# Signing material - never commit the private key
+keys/
+*.pfx
+*.p12
+
+# Pack staging
+pack/

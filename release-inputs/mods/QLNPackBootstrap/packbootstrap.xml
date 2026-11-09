@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PackBootstrap>
+  <!--
+    URL of the pack manifest. This can be:
+      - a Google Drive/Dropbox manifest share link,
+      - a static HTTPS URL,
+      - or a QLNPackServer URL such as http://203.0.113.10:8765/manifest.json.
+  -->
+  <ManifestUrl>https://drive.google.com/file/d/REPLACE_MANIFEST_ID/view?usp=sharing</ManifestUrl>
+
+  <!-- Optional. Defaults to ManifestUrl + ".sig" when left empty. -->
+  <SignatureUrl></SignatureUrl>
+
+  <!--
+    Only for QLNPackServer. Leave empty for Google Drive/Dropbox/static hosting.
+    The bootstrap adds it to manifest and zip requests when set.
+  -->
+  <AccessToken></AccessToken>
+
+  <!--
+    Paste the contents of public-key.xml here (the RSAKeyValue XML).
+    Leave empty to allow unsigned manifests; the UI will warn the player.
+    Set RequireSignature to true once you have generated a key.
+  -->
+  <PublicKeyXml><![CDATA[]]></PublicKeyXml>
+  <RequireSignature>false</RequireSignature>
+
+  <!--
+    Empty means any HTTPS host. For tighter security set this to your host(s).
+    For Google Drive include drive.google.com and drive.usercontent.google.com.
+  -->
+  <AllowedHosts></AllowedHosts>
+
+  <!--
+    false for Google Drive/Dropbox/HTTPS.
+    true only when using the plain HTTP QLNPackServer agent.
+  -->
+  <AllowInsecureHttp>false</AllowInsecureHttp>
+
+  <CheckOnMainMenu>true</CheckOnMainMenu>
+
+  <!--
+    Show a "Check Mod Pack Updates" button on the main menu. Clicking it opens
+    the update window again after it has been closed.
+  -->
+  <ShowMainMenuButton>true</ShowMainMenuButton>
+
+  <ShowCheckErrors>true</ShowCheckErrors>
+
+  <KeepBackups>3</KeepBackups>
+  <MaxModBytes>2147483648</MaxModBytes>
+  <MaxTotalBytes>8589934592</MaxTotalBytes>
+  <MaxEntries>100000</MaxEntries>
+  <MaxUncompressedBytes>8589934592</MaxUncompressedBytes>
+
+  <!-- Remove pack-owned mods that are no longer listed in the manifest. -->
+  <RemoveObsolete>false</RemoveObsolete>
+
+  <!-- Shown in the UI and used for a warning only. -->
+  <GameVersion>3.4</GameVersion>
+
+  <!-- Optional. Leave empty to use <game folder>\7DaysToDie.exe. -->
+  <GameExe></GameExe>
+
+  <!-- Relaunch the game after the updater applies the pack. -->
+  <AutoRelaunch>true</AutoRelaunch>
+
+  <!--
+    When true, the client restarts automatically a few seconds after all mods
+    are downloaded and staged. The updater applies the pack and relaunches.
+  -->
+  <AutoRestart>true</AutoRestart>
+
+  <!--
+    How many mods to download at the same time. Allowed range: 1-10.
+    Google Drive often throttles above 3-4, so 4 is a safe default.
+  -->
+  <MaxParallelDownloads>4</MaxParallelDownloads>
+
+  <!--
+    Install target. Empty means "the folder that contains this bootstrap mod
+    folder", i.e. the active Mods directory the bootstrap was loaded from.
+    Set an absolute path (or a path relative to this bootstrap folder) only if
+    you need to force a different active Mods directory.
+  -->
+  <ModsRoot></ModsRoot>
+</PackBootstrap>

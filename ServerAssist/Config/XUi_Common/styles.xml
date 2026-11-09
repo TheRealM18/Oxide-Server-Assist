@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<ServerAssistStyles>
+	<!-- Server Assist palette derived from the hand-painted plugin icon set. -->
+	<append xpath="/styles/global">
+		<style_entry name="saInk" value="12,14,14,255" />
+		<style_entry name="saPanel" value="24,32,31,255" />
+		<style_entry name="saPanelRaised" value="31,42,40,255" />
+		<style_entry name="saBorder" value="74,58,38,255" />
+		<style_entry name="saBorderBright" value="201,162,74,255" />
+		<style_entry name="saTeal" value="58,102,100,255" />
+		<style_entry name="saTealDark" value="38,66,64,255" />
+		<style_entry name="saBrass" value="201,162,74,255" />
+		<style_entry name="saBrassBright" value="255,209,102,255" />
+		<style_entry name="saRust" value="122,73,44,255" />
+		<style_entry name="saParchment" value="232,224,208,255" />
+		<style_entry name="saMuted" value="184,176,160,255" />
+		<style_entry name="saAmber" value="255,204,102,255" />
+		<style_entry name="saGlow" value="201,162,74,120" />
+		<style_entry name="saDanger" value="150,60,44,255" />
+	</append>
+</ServerAssistStyles>

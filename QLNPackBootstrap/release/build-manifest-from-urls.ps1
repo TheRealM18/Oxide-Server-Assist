@@ -1,0 +1,199 @@
+param(
+    [Parameter(Mandatory = $true)]
+    [string]$ItemsFile,
+
+    [string]$ZipDir = "",
+
+    [Parameter(Mandatory = $true)]
+    [string]$OutputDir,
+
+    [Parameter(Mandatory = $true)]
+    [string]$PackVersion,
+
+    [string]$GameVersion = "3.4",
+    [string]$PrivateKeyXml = "",
+    [string]$Remove = ""
+)
+
+$ErrorActionPreference = 'Stop'
+
+if ($PackVersion -notmatch '^[0-9A-Za-z._\-]+$' -or $PackVersion -eq '.' -or $PackVersion -eq '..' -or $PackVersion.Contains('..')) {
+    throw "PackVersion '$PackVersion' is not safe."
+}
+
+$itemsPath = (Resolve-Path $ItemsFile).Path
+$itemsDir = Split-Path -Parent $itemsPath
+$items = Get-Content -Path $itemsPath -Raw | ConvertFrom-Json
+$items = @($items)
+
+if ($items.Count -eq 0) {
+    throw "No items found in $itemsPath."
+}
+
+$OutputDir = [IO.Path]::GetFullPath($OutputDir)
+New-Item -ItemType Directory -Force $OutputDir | Out-Null
+
+$mods = @()
+
+foreach ($item in $items) {
+    $name = [string]$item.name
+    $displayName = [string]$item.displayName
+    $version = [string]$item.version
+    $url = [string]$item.url
+    $file = [string]$item.file
+    $installFolder = [string]$item.installFolder
+
+    if ([string]::IsNullOrWhiteSpace($name) -or $name -notmatch '^[0-9A-Za-z_\-]+$') {
+        throw "Item name '$name' is missing or invalid."
+    }
+
+    if ([string]::IsNullOrWhiteSpace($version)) {
+        throw "Item '$name' is missing its version."
+    }
+
+    if ([string]::IsNullOrWhiteSpace($url)) {
+        throw "Item '$name' is missing its URL."
+    }
+
+    if ($url -match 'REPLACE_') {
+        throw "Item '$name' still has a placeholder URL. Replace it with the real Google Drive share link."
+    }
+
+    if ($url -match 'drive\.google\.com/drive/(u/\d+/)?folders/') {
+        throw "Item '$name' uses a Google Drive folder link. Use a per-file share link, not a folder."
+    }
+
+    if ($url -match 'drive\.google\.com' -and
+        $url -notmatch '/file/d/[A-Za-z0-9_-]+' -and
+        $url -notmatch '[?&]id=[A-Za-z0-9_-]+') {
+        throw "Item '$name' has a Google Drive URL without a file ID. Copy the file's share link, not a folder."
+    }
+
+    if ($url -match 'dropbox\.com/(scl/fo|sh)/') {
+        throw "Item '$name' uses a Dropbox folder link. Use a per-file zip link."
+    }
+
+    if ($url -match '1drv\.ms|onedrive\.live\.com|sharepoint\.com') {
+        Write-Warning "Item '$name' uses OneDrive. OneDrive short links sometimes redirect to a preview page; a direct zip link is more reliable."
+    }
+
+    if ([string]::IsNullOrWhiteSpace($displayName)) {
+        $displayName = $name
+    }
+
+    if ([string]::IsNullOrWhiteSpace($installFolder)) {
+        $installFolder = $name
+    }
+
+    if ($installFolder -notmatch '^[0-9A-Za-z_\-]+$' -or
+        $installFolder -eq '000_QLNPackBootstrap' -or
+        $installFolder -eq 'Data') {
+        throw "Item '$name' has an invalid installFolder '$installFolder'."
+    }
+
+    if ([string]::IsNullOrWhiteSpace($file)) {
+        throw "Item '$name' is missing the local zip path in 'file'."
+    }
+
+    $zipBaseDir = $itemsDir
+    if (-not [string]::IsNullOrWhiteSpace($ZipDir)) {
+        $zipBaseDir = (Resolve-Path $ZipDir).Path
+    }
+
+    if ([IO.Path]::IsPathRooted($file)) {
+        $filePath = $file
+    }
+    else {
+        # Relative local paths are resolved from the items file (or -ZipDir).
+        $filePath = Join-Path $zipBaseDir $file
+
+        if (-not (Test-Path $filePath) -and -not [string]::IsNullOrWhiteSpace($ZipDir)) {
+            $filePath = Join-Path $itemsDir $file
+        }
+    }
+
+    if (-not (Test-Path $filePath)) {
+        throw "Local zip not found for '$name': $filePath. Relative 'file' paths resolve from '$zipBaseDir' (or use -ZipDir)."
+    }
+
+    $filePath = (Resolve-Path $filePath).Path
+    if (-not (Test-Path $filePath -PathType Leaf)) {
+        throw "Local zip not found for '$name': $filePath"
+    }
+
+    $hash = (Get-FileHash -Path $filePath -Algorithm SHA256).Hash.ToLowerInvariant()
+    $size = (Get-Item $filePath).Length
+
+    $mods += [ordered]@{
+        name = $name
+        displayName = $displayName
+        version = $version
+        url = $url
+        sha256 = $hash
+        size = $size
+        target = "client"
+        installFolder = $installFolder
+        required = $true
+    }
+
+    Write-Host ("Added {0} v{1} ({2} bytes)" -f $displayName, $version, $size)
+}
+
+$removeList = @()
+if (-not [string]::IsNullOrWhiteSpace($Remove)) {
+    $removeList = @($Remove.Split(',') | ForEach-Object { $_.Trim() } | Where-Object { $_.Length -gt 0 })
+    foreach ($folder in $removeList) {
+        if ($folder -notmatch '^[0-9A-Za-z_\-]+$' -or $folder -eq '000_QLNPackBootstrap' -or $folder -eq 'Data') {
+            throw "Remove entry '$folder' is not a safe pack folder."
+        }
+    }
+}
+
+$manifest = [ordered]@{
+    schemaVersion = 1
+    packVersion = $PackVersion
+    gameVersion = $GameVersion
+    generatedAt = (Get-Date).ToUniversalTime().ToString("o")
+    notes = "Generated by build-manifest-from-urls.ps1"
+    mods = @($mods)
+    remove = @($removeList)
+}
+
+$json = $manifest | ConvertTo-Json -Depth 8
+$manifestPath = Join-Path $OutputDir 'manifest.json'
+$utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+$manifestBytes = $utf8NoBom.GetBytes($json)
+[IO.File]::WriteAllBytes($manifestPath, $manifestBytes)
+
+Write-Host ""
+Write-Host "Manifest: $manifestPath"
+
+if (-not [string]::IsNullOrWhiteSpace($PrivateKeyXml)) {
+    $privateXml = [IO.File]::ReadAllText((Resolve-Path $PrivateKeyXml).Path)
+    $rsa = New-Object System.Security.Cryptography.RSACryptoServiceProvider
+    try {
+        $rsa.PersistKeyInCsp = $false
+        $rsa.FromXmlString($privateXml)
+
+        $signature = $rsa.SignData(
+            $manifestBytes,
+            [System.Security.Cryptography.HashAlgorithmName]::SHA256,
+            [System.Security.Cryptography.RSASignaturePadding]::Pkcs1)
+
+        $signaturePath = Join-Path $OutputDir 'manifest.json.sig'
+        [IO.File]::WriteAllText($signaturePath, [Convert]::ToBase64String($signature))
+        Write-Host "Signature: $signaturePath"
+    }
+    finally {
+        $rsa.Dispose()
+    }
+}
+else {
+    Write-Host ""
+    Write-Host "WARNING: no PrivateKeyXml supplied. The manifest is unsigned."
+}
+
+Write-Host ""
+Write-Host "Upload manifest.json (and manifest.json.sig if signed) somewhere the"
+Write-Host "clients can reach. Google Drive, Dropbox, GitHub, or any static host is fine."
+Write-Host "The client resolves Google Drive/Dropbox share links automatically."

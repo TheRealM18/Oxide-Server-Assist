@@ -1,0 +1,101 @@
+site_name: Server Assist
+site_description: Server Assist documentation for 7 Days to Die
+site_author: TheRealM18
+repo_url: https://github.com/TheRealM18/Oxide-Server-Assist
+repo_name: TheRealM18/Oxide-Server-Assist
+edit_uri: edit/main/docs/
+docs_dir: docs
+use_directory_urls: true
+
+theme:
+  name: material
+  language: en
+  features:
+    - navigation.sections
+    - navigation.indexes
+    - navigation.top
+    - navigation.footer
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.code.select
+    - toc.follow
+  palette:
+    - scheme: default
+      primary: blue grey
+      accent: teal
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: blue grey
+      accent: teal
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+
+plugins:
+  - search
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.details
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+
+nav:
+  - Home: index.md
+  - Start:
+      - Install: start/install.md
+  - Core:
+      - Overview: core/index.md
+      - Product guide: core/server-assist.md
+      - Interface: core/interface.md
+      - Buttons: core/buttons.md
+      - Icons: core/icons.md
+      - Item search: core/item-search.md
+      - Permissions: core/permissions.md
+  - Integration:
+      - Overview: integration/index.md
+      - API:
+          - Overview: integration/api/index.md
+          - Panels and hooks: integration/api/panels.md
+          - Providers: integration/api/providers.md
+          - View protocol: integration/api/view-protocol.md
+          - Handlers and lifecycle: integration/api/handlers.md
+          - Companion protocols: integration/api/companion-protocols.md
+          - Example and reference: integration/api/example-reference.md
+      - Companions:
+          - Overview: integration/companions/index.md
+          - Core companions: integration/companions/core.md
+          - Staff and utility: integration/companions/staff-utility.md
+          - Media and network: integration/companions/media-network.md
+          - Writing a companion: integration/companions/authoring.md
+      - Dynamic Backpack: integration/dynamic-backpack.md
+  - Reference:
+      - Overview: reference/index.md
+      - Migration:
+          - Overview: reference/migration/index.md
+          - API and data: reference/migration/api-data.md
+          - Rollout and rollback: reference/migration/rollout-rollback.md
+      - Troubleshooting:
+          - Overview: reference/troubleshooting/index.md
+          - Runtime problems: reference/troubleshooting/runtime.md
+          - Companion problems: reference/troubleshooting/companions.md
+          - Data and reports: reference/troubleshooting/data-reports.md
+      - FAQ:
+          - Overview: reference/faq/index.md
+          - Buttons and icons: reference/faq/buttons-icons.md
+          - API and companions: reference/faq/api-companions.md
+          - Migration and security: reference/faq/migration-security.md

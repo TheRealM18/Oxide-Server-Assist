@@ -1,0 +1,22 @@
+[Unit]
+Description=Twitch Relay for 7 Days to Die
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=sdtd
+Group=sdtd
+WorkingDirectory=/opt/twitchrelay
+ExecStart=/opt/twitchrelay/TwitchRelay
+Restart=always
+RestartSec=5
+Environment=TWITCH_RELAY_CONFIG=/opt/twitchrelay/relay.json
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=true
+ReadWritePaths=/opt/twitchrelay/data /opt/twitchrelay/relay.json
+
+[Install]
+WantedBy=multi-user.target

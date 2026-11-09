@@ -1,0 +1,101 @@
+{
+  "ChatPrefix": "[Rewards]",
+  "GrantUseToDefaultGroup": true,
+  "HookLabel": "Daily Rewards",
+  "HookDescription": "Claim daily, weekly, monthly and seasonal rewards.",
+  "HookPermission": "dailyrewards.use",
+  "PanelIcon": "sprite:sa_daily_rewards",
+  "PanelOrder": 30,
+  "NotifyWhenReady": true,
+  "SaveIntervalSeconds": 300,
+  "MaxTickAccrualSeconds": 300,
+  "DailyResetHour": 0,
+  "WeeklyResetDay": "Monday",
+  "SouthernHemisphere": false,
+  "SeasonMode": "calendar",
+  "ManualSeason": "Season 1",
+  "Daily": {
+    "Enabled": true,
+    "DisplayName": "Daily",
+    "Icon": "sprite:sa_daily_rewards",
+    "RequiredPlaytimeMinutes": 60,
+    "Permission": "",
+    "Items": [
+      {
+        "Item": "casinoCoin",
+        "Count": 10,
+        "Quality": 0
+      },
+      {
+        "Item": "medicalFirstAidBandage",
+        "Count": 1,
+        "Quality": 0
+      }
+    ],
+    "Commands": [],
+    "Permissions": []
+  },
+  "Weekly": {
+    "Enabled": true,
+    "DisplayName": "Weekly",
+    "Icon": "sprite:sa_act_time",
+    "RequiredPlaytimeMinutes": 0,
+    "Permission": "",
+    "Items": [
+      {
+        "Item": "casinoCoin",
+        "Count": 75,
+        "Quality": 0
+      },
+      {
+        "Item": "medicalFirstAidBandage",
+        "Count": 3,
+        "Quality": 0
+      }
+    ],
+    "Commands": [],
+    "Permissions": []
+  },
+  "Monthly": {
+    "Enabled": true,
+    "DisplayName": "Monthly",
+    "Icon": "sprite:sa_nav_snapshots",
+    "RequiredPlaytimeMinutes": 0,
+    "Permission": "",
+    "Items": [
+      {
+        "Item": "casinoCoin",
+        "Count": 300,
+        "Quality": 0
+      },
+      {
+        "Item": "medicalFirstAidBandage",
+        "Count": 10,
+        "Quality": 0
+      }
+    ],
+    "Commands": [],
+    "Permissions": []
+  },
+  "Seasonal": {
+    "Enabled": true,
+    "DisplayName": "Seasonal",
+    "Icon": "sprite:sa_act_weather",
+    "RequiredPlaytimeMinutes": 0,
+    "Permission": "",
+    "Items": [
+      {
+        "Item": "casinoCoin",
+        "Count": 1500,
+        "Quality": 0
+      },
+      {
+        "Item": "medicalFirstAidBandage",
+        "Count": 20,
+        "Quality": 0
+      }
+    ],
+    "Commands": [],
+    "Permissions": []
+  }
+}

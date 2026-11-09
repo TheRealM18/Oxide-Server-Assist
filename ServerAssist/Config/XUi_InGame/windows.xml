@@ -1,0 +1,258 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<configs>
+	<append xpath="/windows">
+		<window name="windowServerAssist" fade_window="false" width="1360" height="820" panel="Center" controller="ServerAssistWindow, ServerAssistMod" cursor_area="true" always_update="true">
+			<rect name="content" width="1360" height="820">
+				<sprite depth="0" sprite="menu_empty" color="[saInk]" type="sliced" />
+				<sprite depth="1" sprite="menu_empty3px" color="[saBorder]" type="sliced" fillcenter="false" pos="2,-2" width="1356" height="816" />
+				<sprite depth="2" sprite="menu_empty3px" color="[saBrass]" type="sliced" fillcenter="true" pos="0,0" width="1360" height="4" />
+
+				<!-- Header -->
+				<sprite depth="3" name="brandIcon" pos="24,-18" width="44" height="44" sprite="sa_server_assist" color="[white]" />
+				<label depth="3" name="title" pos="80,-8" width="520" height="34" text="SERVER ASSIST" font_size="30" color="[saParchment]" effect="outline" effect_color="[black]" />
+				<label depth="3" name="brandSub" pos="82,-42" width="520" height="20" text="SERVER TOOLS  |  QUICK ACTIONS" font_size="14" color="[saMuted]" />
+					<rect name="btnCloseWindow" pos="1260,-16" width="80" height="40" controller="SimpleButton" visible="true" button_enabled="true">
+						<button depth="3" name="clickable" pos="0,0" width="80" height="40" pivot="topleft" sprite="menu_empty" defaultcolor="[saPanelRaised]" disabledcolor="[saInk]" hoversprite="menu_empty" hovercolor="[saPanelRaised]" selectedsprite="menu_empty" selectedcolor="[saPanelRaised]" type="sliced" hoverscale="1.0" collider_scale="1" sound="[paging_click]" />
+					<sprite depth="4" name="border" pos="0,0" width="80" height="40" pivot="topleft" sprite="menu_empty3px" color="[saBorder]" type="sliced" fillcenter="false" />
+					<sprite depth="5" name="hover" pos="0,0" width="80" height="40" pivot="topleft" sprite="menu_empty3px" color="[white]" type="sliced" fillcenter="false" visible="false" />
+						<label depth="5" name="btnLabel" pos="0,-20" width="80" height="38" pivot="left" justify="center" text="X" font_size="18" color="[saParchment]" effect="outline" effect_color="[black]" />
+					</rect>
+
+				<!-- Sidebar -->
+				<rect name="sidebar" pos="20,-88" width="250" height="696">
+					<sprite depth="0" sprite="menu_empty" color="[saPanel]" type="sliced" />
+					<sprite depth="1" sprite="menu_empty3px" color="[saBorder]" type="sliced" fillcenter="false" pos="2,-2" width="246" height="692" />
+					<label depth="2" name="sideHeading" pos="16,-12" width="218" height="22" text="NAVIGATION" font_size="15" color="[saBrass]" />
+					<rect name="tabHome" pos="12,-46" width="226" height="42" controller="SimpleButton" visible="true" button_enabled="true">
+						<button depth="3" name="clickable" pos="0,0" width="226" height="42" pivot="topleft" sprite="menu_empty" defaultcolor="[saPanelRaised]" disabledcolor="[saInk]" hoversprite="menu_empty" hovercolor="[saPanelRaised]" selectedsprite="menu_empty" selectedcolor="[saPanelRaised]" type="sliced" hoverscale="1.0" collider_scale="1" sound="[paging_click]" />
+					<sprite depth="4" name="border" pos="0,0" width="226" height="42" pivot="topleft" sprite="menu_empty3px" color="[saBorder]" type="sliced" fillcenter="false" />
+					<sprite depth="5" name="hover" pos="0,0" width="226" height="42" pivot="topleft" sprite="menu_empty3px" color="[white]" type="sliced" fillcenter="false" visible="false" />
+						<label depth="5" name="btnLabel" pos="0,-21" width="226" height="40" pivot="left" justify="center" text="Home" font_size="18" color="[saParchment]" effect="outline" effect_color="[black]" />
+					</rect>
+					<rect name="tabShared" pos="12,-94" width="226" height="42" controller="SimpleButton" visible="true" button_enabled="true">
+						<button depth="3" name="clickable" pos="0,0" width="226" height="42" pivot="topleft" sprite="menu_empty" defaultcolor="[saPanelRaised]" disabledcolor="[saInk]" hoversprite="menu_empty" hovercolor="[saPanelRaised]" selectedsprite="menu_empty" selectedcolor="[saPanelRaised]" type="sliced" hoverscale="1.0" collider_scale="1" sound="[paging_click]" />
+					<sprite depth="4" name="border" pos="0,0" width="226" height="42" pivot="topleft" sprite="menu_empty3px" color="[saBorder]" type="sliced" fillcenter="false" />
+					<sprite depth="5" name="hover" pos="0,0" width="226" height="42" pivot="topleft" sprite="menu_empty3px" color="[white]" type="sliced" fillcenter="false" visible="false" />
+						<label depth="5" name="btnLabel" pos="0,-21" width="226" height="40" pivot="left" justify="center" text="Shared" font_size="18" color="[saParchment]" effect="outline" effect_color="[black]" />
+					</rect>
+					<rect name="tabMine" pos="12,-142" width="226" height="42" controller="SimpleButton" visible="true" button_enabled="true">
+						<button depth="3" name="clickable" pos="0,0" width="226" height="42" pivot="topleft" sprite="menu_empty" defaultcolor="[saPanelRaised]" disabledcolor="[saInk]" hoversprite="menu_empty" hovercolor="[saPanelRaised]" selectedsprite="menu_empty" selectedcolor="[saPanelRaised]" type="sliced" hoverscale="1.0" collider_scale="1" sound="[paging_click]" />
+					<sprite depth="4" name="border" pos="0,0" width="226" height="42" pivot="topleft" sprite="menu_empty3px" color="[saBorder]" type="sliced" fillcenter="false" />
+					<sprite depth="5" name="hover" pos="0,0" width="226" height="42" pivot="topleft" sprite="menu_empty3px" color="[white]" type="sliced" fillcenter="false" visible="false" />
+						<label depth="5" name="btnLabel" pos="0,-21" width="226" height="40" pivot="left" justify="center" text="My Buttons" font_size="18" color="[saParchment]" effect="outline" effect_color="[black]" />
+					</rect>
+					<rect name="btnRefresh" pos="12,-200" width="226" height="42" controller="SimpleButton" visible="true" button_enabled="true">
+						<button depth="3" name="clickable" pos="0,0" width="226" height="42" pivot="topleft" sprite="menu_empty" defaultcolor="[saPanelRaised]" disabledcolor="[saInk]" hoversprite="menu_empty" hovercolor="[saPanelRaised]" selectedsprite="menu_empty" selectedcolor="[saPanelRaised]" type="sliced" hoverscale="1.0" collider_scale="1" sound="[paging_click]" />
+					<sprite depth="4" name="border" pos="0,0" width="226" height="42" pivot="topleft" sprite="menu_empty3px" color="[saBorder]" type="sliced" fillcenter="false" />
+					<sprite depth="5" name="hover" pos="0,0" width="226" height="42" pivot="topleft" sprite="menu_empty3px" color="[white]" type="sliced" fillcenter="false" visible="false" />
+						<label depth="5" name="btnLabel" pos="0,-21" width="226" height="40" pivot="left" justify="center" text="Refresh" font_size="18" color="[saParchment]" effect="outline" effect_color="[black]" />
+					</rect>
+					<rect name="btnHookBack" pos="12,-248" width="226" height="42" controller="SimpleButton" visible="false" button_enabled="true">
+						<button depth="3" name="clickable" pos="0,0" width="226" height="42" pivot="topleft" sprite="menu_empty" defaultcolor="[saPanelRaised]" disabledcolor="[saInk]" hoversprite="menu_empty" hovercolor="[saPanelRaised]" selectedsprite="menu_empty" selectedcolor="[saPanelRaised]" type="sliced" hoverscale="1.0" collider_scale="1" sound="[paging_click]" />
+					<sprite depth="4" name="border" pos="0,0" width="226" height="42" pivot="topleft" sprite="menu_empty3px" color="[saBorder]" type="sliced" fillcenter="false" />
+					<sprite depth="5" name="hover" pos="0,0" width="226" height="42" pivot="topleft" sprite="menu_empty3px" color="[white]" type="sliced" fillcenter="false" visible="false" />
+						<label depth="5" name="btnLabel" pos="0,-21" width="226" height="40" pivot="left" justify="center" text="Back" font_size="18" color="[saParchment]" effect="outline" effect_color="[black]" />
+					</rect>
+					<sprite depth="2" sprite="menu_empty3px" color="[saBorder]" type="sliced" fillcenter="true" pos="12,-360" width="226" height="1" />
+					<label depth="2" name="sideFooter" pos="16,-652" width="218" height="32" text="F7 / F6 to open&#xA;Server Assist v2" font_size="13" color="[saMuted]" />
+				</rect>
+
+				<!-- Content pane -->
+				<rect name="main" pos="286,-88" width="1054" height="696">
+					<sprite depth="0" sprite="menu_empty" color="[saPanel]" type="sliced" />
+					<sprite depth="1" name="panelBackground" pos="780,-2" width="240" height="240" pivot="topleft" sprite="ui_game_symbol_hammer" color="[white]" visible="false" />
+					<sprite depth="1" sprite="menu_empty3px" color="[saBorder]" type="sliced" fillcenter="false" pos="2,-2" width="1050" height="692" />
+					<label depth="2" name="contentTitle" pos="20,-10" width="760" height="32" text="Server Assist" font_size="28" color="[saParchment]" effect="outline" effect_color="[black]" />
+					<label depth="2" name="subtitle" pos="20,-44" width="920" height="22" text="" font_size="16" color="[saMuted]" />
+					<label depth="2" name="status" pos="20,-68" width="920" height="22" text="" font_size="15" color="[saAmber]" />
+					<sprite depth="3" name="panelBanner" pos="960,-6" width="72" height="72" pivot="topleft" sprite="ui_game_symbol_hammer" color="[white]" visible="false" />
+
+					<!-- Art cards: explicit SimpleButton containers so the icon and labels are real child views. -->
+					<rect name="row0" pos="16,-94" width="500" height="84" controller="SimpleButton" visible="false" button_enabled="true">
+						<button depth="3" name="clickable" pos="0,0" width="500" height="84" pivot="topleft" sprite="menu_empty" defaultcolor="[saPanelRaised]" disabledcolor="[saInk]" hoversprite="menu_empty" hovercolor="[saPanelRaised]" selectedsprite="menu_empty" selectedcolor="[saPanelRaised]" type="sliced" hoverscale="1.0" collider_scale="1" sound="[paging_click]" />
+						<sprite depth="4" name="border" pos="0,0" width="500" height="84" pivot="topleft" sprite="menu_empty3px" color="[saBorder]" type="sliced" fillcenter="false" />
+						<sprite depth="5" name="hover" pos="0,0" width="500" height="84" pivot="topleft" sprite="menu_empty3px" color="[white]" type="sliced" fillcenter="false" visible="false" />
+						<sprite depth="5" name="icon" pos="10,-10" width="64" height="64" pivot="topleft" sprite="ui_game_symbol_hammer" color="[white]" />
+						<label depth="5" name="label" pos="86,-8" width="396" height="24" pivot="topleft" text="" font_size="20" color="[saParchment]" effect="outline" effect_color="[black]" />
+						<label depth="5" name="sub" pos="86,-32" width="396" height="34" pivot="topleft" text="" font_size="14" color="[saMuted]" />
+					</rect>
+					<rect name="row1" pos="530,-94" width="500" height="84" controller="SimpleButton" visible="false" button_enabled="true">
+						<button depth="3" name="clickable" pos="0,0" width="500" height="84" pivot="topleft" sprite="menu_empty" defaultcolor="[saPanelRaised]" disabledcolor="[saInk]" hoversprite="menu_empty" hovercolor="[saPanelRaised]" selectedsprite="menu_empty" selectedcolor="[saPanelRaised]" type="sliced" hoverscale="1.0" collider_scale="1" sound="[paging_click]" />
+						<sprite depth="4" name="border" pos="0,0" width="500" height="84" pivot="topleft" sprite="menu_empty3px" color="[saBorder]" type="sliced" fillcenter="false" />
+						<sprite depth="5" name="hover" pos="0,0" width="500" height="84" pivot="topleft" sprite="menu_empty3px" color="[white]" type="sliced" fillcenter="false" visible="false" />
+						<sprite depth="5" name="icon" pos="10,-10" width="64" height="64" pivot="topleft" sprite="ui_game_symbol_hammer" color="[white]" />
+						<label depth="5" name="label" pos="86,-8" width="396" height="24" pivot="topleft" text="" font_size="20" color="[saParchment]" effect="outline" effect_color="[black]" />
+						<label depth="5" name="sub" pos="86,-32" width="396" height="34" pivot="topleft" text="" font_size="14" color="[saMuted]" />
+					</rect>
+					<rect name="row2" pos="16,-184" width="500" height="84" controller="SimpleButton" visible="false" button_enabled="true">
+						<button depth="3" name="clickable" pos="0,0" width="500" height="84" pivot="topleft" sprite="menu_empty" defaultcolor="[saPanelRaised]" disabledcolor="[saInk]" hoversprite="menu_empty" hovercolor="[saPanelRaised]" selectedsprite="menu_empty" selectedcolor="[saPanelRaised]" type="sliced" hoverscale="1.0" collider_scale="1" sound="[paging_click]" />
+						<sprite depth="4" name="border" pos="0,0" width="500" height="84" pivot="topleft" sprite="menu_empty3px" color="[saBorder]" type="sliced" fillcenter="false" />
+						<sprite depth="5" name="hover" pos="0,0" width="500" height="84" pivot="topleft" sprite="menu_empty3px" color="[white]" type="sliced" fillcenter="false" visible="false" />
+						<sprite depth="5" name="icon" pos="10,-10" width="64" height="64" pivot="topleft" sprite="ui_game_symbol_hammer" color="[white]" />
+						<label depth="5" name="label" pos="86,-8" width="396" height="24" pivot="topleft" text="" font_size="20" color="[saParchment]" effect="outline" effect_color="[black]" />
+						<label depth="5" name="sub" pos="86,-32" width="396" height="34" pivot="topleft" text="" font_size="14" color="[saMuted]" />
+					</rect>
+					<rect name="row3" pos="530,-184" width="500" height="84" controller="SimpleButton" visible="false" button_enabled="true">
+						<button depth="3" name="clickable" pos="0,0" width="500" height="84" pivot="topleft" sprite="menu_empty" defaultcolor="[saPanelRaised]" disabledcolor="[saInk]" hoversprite="menu_empty" hovercolor="[saPanelRaised]" selectedsprite="menu_empty" selectedcolor="[saPanelRaised]" type="sliced" hoverscale="1.0" collider_scale="1" sound="[paging_click]" />
+						<sprite depth="4" name="border" pos="0,0" width="500" height="84" pivot="topleft" sprite="menu_empty3px" color="[saBorder]" type="sliced" fillcenter="false" />
+						<sprite depth="5" name="hover" pos="0,0" width="500" height="84" pivot="topleft" sprite="menu_empty3px" color="[white]" type="sliced" fillcenter="false" visible="false" />
+						<sprite depth="5" name="icon" pos="10,-10" width="64" height="64" pivot="topleft" sprite="ui_game_symbol_hammer" color="[white]" />
+						<label depth="5" name="label" pos="86,-8" width="396" height="24" pivot="topleft" text="" font_size="20" color="[saParchment]" effect="outline" effect_color="[black]" />
+						<label depth="5" name="sub" pos="86,-32" width="396" height="34" pivot="topleft" text="" font_size="14" color="[saMuted]" />
+					</rect>
+					<rect name="row4" pos="16,-274" width="500" height="84" controller="SimpleButton" visible="false" button_enabled="true">
+						<button depth="3" name="clickable" pos="0,0" width="500" height="84" pivot="topleft" sprite="menu_empty" defaultcolor="[saPanelRaised]" disabledcolor="[saInk]" hoversprite="menu_empty" hovercolor="[saPanelRaised]" selectedsprite="menu_empty" selectedcolor="[saPanelRaised]" type="sliced" hoverscale="1.0" collider_scale="1" sound="[paging_click]" />
+						<sprite depth="4" name="border" pos="0,0" width="500" height="84" pivot="topleft" sprite="menu_empty3px" color="[saBorder]" type="sliced" fillcenter="false" />
+						<sprite depth="5" name="hover" pos="0,0" width="500" height="84" pivot="topleft" sprite="menu_empty3px" color="[white]" type="sliced" fillcenter="false" visible="false" />
+						<sprite depth="5" name="icon" pos="10,-10" width="64" height="64" pivot="topleft" sprite="ui_game_symbol_hammer" color="[white]" />
+						<label depth="5" name="label" pos="86,-8" width="396" height="24" pivot="topleft" text="" font_size="20" color="[saParchment]" effect="outline" effect_color="[black]" />
+						<label depth="5" name="sub" pos="86,-32" width="396" height="34" pivot="topleft" text="" font_size="14" color="[saMuted]" />
+					</rect>
+					<rect name="row5" pos="530,-274" width="500" height="84" controller="SimpleButton" visible="false" button_enabled="true">
+						<button depth="3" name="clickable" pos="0,0" width="500" height="84" pivot="topleft" sprite="menu_empty" defaultcolor="[saPanelRaised]" disabledcolor="[saInk]" hoversprite="menu_empty" hovercolor="[saPanelRaised]" selectedsprite="menu_empty" selectedcolor="[saPanelRaised]" type="sliced" hoverscale="1.0" collider_scale="1" sound="[paging_click]" />
+						<sprite depth="4" name="border" pos="0,0" width="500" height="84" pivot="topleft" sprite="menu_empty3px" color="[saBorder]" type="sliced" fillcenter="false" />
+						<sprite depth="5" name="hover" pos="0,0" width="500" height="84" pivot="topleft" sprite="menu_empty3px" color="[white]" type="sliced" fillcenter="false" visible="false" />
+						<sprite depth="5" name="icon" pos="10,-10" width="64" height="64" pivot="topleft" sprite="ui_game_symbol_hammer" color="[white]" />
+						<label depth="5" name="label" pos="86,-8" width="396" height="24" pivot="topleft" text="" font_size="20" color="[saParchment]" effect="outline" effect_color="[black]" />
+						<label depth="5" name="sub" pos="86,-32" width="396" height="34" pivot="topleft" text="" font_size="14" color="[saMuted]" />
+					</rect>
+					<rect name="row6" pos="16,-364" width="500" height="84" controller="SimpleButton" visible="false" button_enabled="true">
+						<button depth="3" name="clickable" pos="0,0" width="500" height="84" pivot="topleft" sprite="menu_empty" defaultcolor="[saPanelRaised]" disabledcolor="[saInk]" hoversprite="menu_empty" hovercolor="[saPanelRaised]" selectedsprite="menu_empty" selectedcolor="[saPanelRaised]" type="sliced" hoverscale="1.0" collider_scale="1" sound="[paging_click]" />
+						<sprite depth="4" name="border" pos="0,0" width="500" height="84" pivot="topleft" sprite="menu_empty3px" color="[saBorder]" type="sliced" fillcenter="false" />
+						<sprite depth="5" name="hover" pos="0,0" width="500" height="84" pivot="topleft" sprite="menu_empty3px" color="[white]" type="sliced" fillcenter="false" visible="false" />
+						<sprite depth="5" name="icon" pos="10,-10" width="64" height="64" pivot="topleft" sprite="ui_game_symbol_hammer" color="[white]" />
+						<label depth="5" name="label" pos="86,-8" width="396" height="24" pivot="topleft" text="" font_size="20" color="[saParchment]" effect="outline" effect_color="[black]" />
+						<label depth="5" name="sub" pos="86,-32" width="396" height="34" pivot="topleft" text="" font_size="14" color="[saMuted]" />
+					</rect>
+					<rect name="row7" pos="530,-364" width="500" height="84" controller="SimpleButton" visible="false" button_enabled="true">
+						<button depth="3" name="clickable" pos="0,0" width="500" height="84" pivot="topleft" sprite="menu_empty" defaultcolor="[saPanelRaised]" disabledcolor="[saInk]" hoversprite="menu_empty" hovercolor="[saPanelRaised]" selectedsprite="menu_empty" selectedcolor="[saPanelRaised]" type="sliced" hoverscale="1.0" collider_scale="1" sound="[paging_click]" />
+						<sprite depth="4" name="border" pos="0,0" width="500" height="84" pivot="topleft" sprite="menu_empty3px" color="[saBorder]" type="sliced" fillcenter="false" />
+						<sprite depth="5" name="hover" pos="0,0" width="500" height="84" pivot="topleft" sprite="menu_empty3px" color="[white]" type="sliced" fillcenter="false" visible="false" />
+						<sprite depth="5" name="icon" pos="10,-10" width="64" height="64" pivot="topleft" sprite="ui_game_symbol_hammer" color="[white]" />
+						<label depth="5" name="label" pos="86,-8" width="396" height="24" pivot="topleft" text="" font_size="20" color="[saParchment]" effect="outline" effect_color="[black]" />
+						<label depth="5" name="sub" pos="86,-32" width="396" height="34" pivot="topleft" text="" font_size="14" color="[saMuted]" />
+					</rect>
+					<rect name="row8" pos="16,-454" width="500" height="84" controller="SimpleButton" visible="false" button_enabled="true">
+						<button depth="3" name="clickable" pos="0,0" width="500" height="84" pivot="topleft" sprite="menu_empty" defaultcolor="[saPanelRaised]" disabledcolor="[saInk]" hoversprite="menu_empty" hovercolor="[saPanelRaised]" selectedsprite="menu_empty" selectedcolor="[saPanelRaised]" type="sliced" hoverscale="1.0" collider_scale="1" sound="[paging_click]" />
+						<sprite depth="4" name="border" pos="0,0" width="500" height="84" pivot="topleft" sprite="menu_empty3px" color="[saBorder]" type="sliced" fillcenter="false" />
+						<sprite depth="5" name="hover" pos="0,0" width="500" height="84" pivot="topleft" sprite="menu_empty3px" color="[white]" type="sliced" fillcenter="false" visible="false" />
+						<sprite depth="5" name="icon" pos="10,-10" width="64" height="64" pivot="topleft" sprite="ui_game_symbol_hammer" color="[white]" />
+						<label depth="5" name="label" pos="86,-8" width="396" height="24" pivot="topleft" text="" font_size="20" color="[saParchment]" effect="outline" effect_color="[black]" />
+						<label depth="5" name="sub" pos="86,-32" width="396" height="34" pivot="topleft" text="" font_size="14" color="[saMuted]" />
+					</rect>
+					<rect name="row9" pos="530,-454" width="500" height="84" controller="SimpleButton" visible="false" button_enabled="true">
+						<button depth="3" name="clickable" pos="0,0" width="500" height="84" pivot="topleft" sprite="menu_empty" defaultcolor="[saPanelRaised]" disabledcolor="[saInk]" hoversprite="menu_empty" hovercolor="[saPanelRaised]" selectedsprite="menu_empty" selectedcolor="[saPanelRaised]" type="sliced" hoverscale="1.0" collider_scale="1" sound="[paging_click]" />
+						<sprite depth="4" name="border" pos="0,0" width="500" height="84" pivot="topleft" sprite="menu_empty3px" color="[saBorder]" type="sliced" fillcenter="false" />
+						<sprite depth="5" name="hover" pos="0,0" width="500" height="84" pivot="topleft" sprite="menu_empty3px" color="[white]" type="sliced" fillcenter="false" visible="false" />
+						<sprite depth="5" name="icon" pos="10,-10" width="64" height="64" pivot="topleft" sprite="ui_game_symbol_hammer" color="[white]" />
+						<label depth="5" name="label" pos="86,-8" width="396" height="24" pivot="topleft" text="" font_size="20" color="[saParchment]" effect="outline" effect_color="[black]" />
+						<label depth="5" name="sub" pos="86,-32" width="396" height="34" pivot="topleft" text="" font_size="14" color="[saMuted]" />
+					</rect>
+
+					<label depth="2" name="inputLabel" pos="20,-548" width="760" height="20" text="" font_size="15" color="[saParchment]" visible="false" />
+					<textfield depth="3" name="txtInput" pos="20,-570" width="720" height="30" font_size="16" character_limit="160" visible="false" backgroundcolor="[saInk]" bordercolor="[saBorder]" />
+					<rect name="btnSubmit" pos="752,-568" width="110" height="32" controller="SimpleButton" visible="false" button_enabled="true">
+						<button depth="3" name="clickable" pos="0,0" width="110" height="32" pivot="topleft" sprite="menu_empty" defaultcolor="[saPanelRaised]" disabledcolor="[saInk]" hoversprite="menu_empty" hovercolor="[saPanelRaised]" selectedsprite="menu_empty" selectedcolor="[saPanelRaised]" type="sliced" hoverscale="1.0" collider_scale="1" sound="[paging_click]" />
+					<sprite depth="4" name="border" pos="0,0" width="110" height="32" pivot="topleft" sprite="menu_empty3px" color="[saBorder]" type="sliced" fillcenter="false" />
+					<sprite depth="5" name="hover" pos="0,0" width="110" height="32" pivot="topleft" sprite="menu_empty3px" color="[white]" type="sliced" fillcenter="false" visible="false" />
+						<label depth="5" name="btnLabel" pos="0,-16" width="110" height="30" pivot="left" justify="center" text="Submit" font_size="16" color="[saParchment]" effect="outline" effect_color="[black]" />
+					</rect>
+					<rect name="btnCancelInput" pos="870,-568" width="136" height="32" controller="SimpleButton" visible="false" button_enabled="true">
+						<button depth="3" name="clickable" pos="0,0" width="136" height="32" pivot="topleft" sprite="menu_empty" defaultcolor="[saPanelRaised]" disabledcolor="[saInk]" hoversprite="menu_empty" hovercolor="[saPanelRaised]" selectedsprite="menu_empty" selectedcolor="[saPanelRaised]" type="sliced" hoverscale="1.0" collider_scale="1" sound="[paging_click]" />
+					<sprite depth="4" name="border" pos="0,0" width="136" height="32" pivot="topleft" sprite="menu_empty3px" color="[saBorder]" type="sliced" fillcenter="false" />
+					<sprite depth="5" name="hover" pos="0,0" width="136" height="32" pivot="topleft" sprite="menu_empty3px" color="[white]" type="sliced" fillcenter="false" visible="false" />
+						<label depth="5" name="btnLabel" pos="0,-16" width="136" height="30" pivot="left" justify="center" text="Cancel" font_size="16" color="[saParchment]" effect="outline" effect_color="[black]" />
+					</rect>
+
+					<!-- 12 action buttons: two rows of six. -->
+					<rect name="btn0" pos="16,-612" width="160" height="36" controller="SimpleButton" visible="false" button_enabled="true">
+						<button depth="3" name="clickable" pos="0,0" width="160" height="36" pivot="topleft" sprite="menu_empty" defaultcolor="[saPanelRaised]" disabledcolor="[saInk]" hoversprite="menu_empty" hovercolor="[saPanelRaised]" selectedsprite="menu_empty" selectedcolor="[saPanelRaised]" type="sliced" hoverscale="1.0" collider_scale="1" sound="[paging_click]" />
+					<sprite depth="4" name="border" pos="0,0" width="160" height="36" pivot="topleft" sprite="menu_empty3px" color="[saBorder]" type="sliced" fillcenter="false" />
+					<sprite depth="5" name="hover" pos="0,0" width="160" height="36" pivot="topleft" sprite="menu_empty3px" color="[white]" type="sliced" fillcenter="false" visible="false" />
+						<sprite depth="5" name="icon" pos="6,-6" width="24" height="24" pivot="topleft" sprite="ui_game_symbol_hammer" color="[white]" visible="false" />
+						<label depth="5" name="btnLabel" pos="0,-18" width="160" height="34" pivot="left" justify="center" text="" font_size="15" color="[saParchment]" effect="outline" effect_color="[black]" />
+					</rect>
+					<rect name="btn1" pos="184,-612" width="160" height="36" controller="SimpleButton" visible="false" button_enabled="true">
+						<button depth="3" name="clickable" pos="0,0" width="160" height="36" pivot="topleft" sprite="menu_empty" defaultcolor="[saPanelRaised]" disabledcolor="[saInk]" hoversprite="menu_empty" hovercolor="[saPanelRaised]" selectedsprite="menu_empty" selectedcolor="[saPanelRaised]" type="sliced" hoverscale="1.0" collider_scale="1" sound="[paging_click]" />
+					<sprite depth="4" name="border" pos="0,0" width="160" height="36" pivot="topleft" sprite="menu_empty3px" color="[saBorder]" type="sliced" fillcenter="false" />
+					<sprite depth="5" name="hover" pos="0,0" width="160" height="36" pivot="topleft" sprite="menu_empty3px" color="[white]" type="sliced" fillcenter="false" visible="false" />
+						<sprite depth="5" name="icon" pos="6,-6" width="24" height="24" pivot="topleft" sprite="ui_game_symbol_hammer" color="[white]" visible="false" />
+						<label depth="5" name="btnLabel" pos="0,-18" width="160" height="34" pivot="left" justify="center" text="" font_size="15" color="[saParchment]" effect="outline" effect_color="[black]" />
+					</rect>
+					<rect name="btn2" pos="352,-612" width="160" height="36" controller="SimpleButton" visible="false" button_enabled="true">
+						<button depth="3" name="clickable" pos="0,0" width="160" height="36" pivot="topleft" sprite="menu_empty" defaultcolor="[saPanelRaised]" disabledcolor="[saInk]" hoversprite="menu_empty" hovercolor="[saPanelRaised]" selectedsprite="menu_empty" selectedcolor="[saPanelRaised]" type="sliced" hoverscale="1.0" collider_scale="1" sound="[paging_click]" />
+					<sprite depth="4" name="border" pos="0,0" width="160" height="36" pivot="topleft" sprite="menu_empty3px" color="[saBorder]" type="sliced" fillcenter="false" />
+					<sprite depth="5" name="hover" pos="0,0" width="160" height="36" pivot="topleft" sprite="menu_empty3px" color="[white]" type="sliced" fillcenter="false" visible="false" />
+						<sprite depth="5" name="icon" pos="6,-6" width="24" height="24" pivot="topleft" sprite="ui_game_symbol_hammer" color="[white]" visible="false" />
+						<label depth="5" name="btnLabel" pos="0,-18" width="160" height="34" pivot="left" justify="center" text="" font_size="15" color="[saParchment]" effect="outline" effect_color="[black]" />
+					</rect>
+					<rect name="btn3" pos="520,-612" width="160" height="36" controller="SimpleButton" visible="false" button_enabled="true">
+						<button depth="3" name="clickable" pos="0,0" width="160" height="36" pivot="topleft" sprite="menu_empty" defaultcolor="[saPanelRaised]" disabledcolor="[saInk]" hoversprite="menu_empty" hovercolor="[saPanelRaised]" selectedsprite="menu_empty" selectedcolor="[saPanelRaised]" type="sliced" hoverscale="1.0" collider_scale="1" sound="[paging_click]" />
+					<sprite depth="4" name="border" pos="0,0" width="160" height="36" pivot="topleft" sprite="menu_empty3px" color="[saBorder]" type="sliced" fillcenter="false" />
+					<sprite depth="5" name="hover" pos="0,0" width="160" height="36" pivot="topleft" sprite="menu_empty3px" color="[white]" type="sliced" fillcenter="false" visible="false" />
+						<sprite depth="5" name="icon" pos="6,-6" width="24" height="24" pivot="topleft" sprite="ui_game_symbol_hammer" color="[white]" visible="false" />
+						<label depth="5" name="btnLabel" pos="0,-18" width="160" height="34" pivot="left" justify="center" text="" font_size="15" color="[saParchment]" effect="outline" effect_color="[black]" />
+					</rect>
+					<rect name="btn4" pos="688,-612" width="160" height="36" controller="SimpleButton" visible="false" button_enabled="true">
+						<button depth="3" name="clickable" pos="0,0" width="160" height="36" pivot="topleft" sprite="menu_empty" defaultcolor="[saPanelRaised]" disabledcolor="[saInk]" hoversprite="menu_empty" hovercolor="[saPanelRaised]" selectedsprite="menu_empty" selectedcolor="[saPanelRaised]" type="sliced" hoverscale="1.0" collider_scale="1" sound="[paging_click]" />
+					<sprite depth="4" name="border" pos="0,0" width="160" height="36" pivot="topleft" sprite="menu_empty3px" color="[saBorder]" type="sliced" fillcenter="false" />
+					<sprite depth="5" name="hover" pos="0,0" width="160" height="36" pivot="topleft" sprite="menu_empty3px" color="[white]" type="sliced" fillcenter="false" visible="false" />
+						<sprite depth="5" name="icon" pos="6,-6" width="24" height="24" pivot="topleft" sprite="ui_game_symbol_hammer" color="[white]" visible="false" />
+						<label depth="5" name="btnLabel" pos="0,-18" width="160" height="34" pivot="left" justify="center" text="" font_size="15" color="[saParchment]" effect="outline" effect_color="[black]" />
+					</rect>
+					<rect name="btn5" pos="856,-612" width="160" height="36" controller="SimpleButton" visible="false" button_enabled="true">
+						<button depth="3" name="clickable" pos="0,0" width="160" height="36" pivot="topleft" sprite="menu_empty" defaultcolor="[saPanelRaised]" disabledcolor="[saInk]" hoversprite="menu_empty" hovercolor="[saPanelRaised]" selectedsprite="menu_empty" selectedcolor="[saPanelRaised]" type="sliced" hoverscale="1.0" collider_scale="1" sound="[paging_click]" />
+					<sprite depth="4" name="border" pos="0,0" width="160" height="36" pivot="topleft" sprite="menu_empty3px" color="[saBorder]" type="sliced" fillcenter="false" />
+					<sprite depth="5" name="hover" pos="0,0" width="160" height="36" pivot="topleft" sprite="menu_empty3px" color="[white]" type="sliced" fillcenter="false" visible="false" />
+						<sprite depth="5" name="icon" pos="6,-6" width="24" height="24" pivot="topleft" sprite="ui_game_symbol_hammer" color="[white]" visible="false" />
+						<label depth="5" name="btnLabel" pos="0,-18" width="160" height="34" pivot="left" justify="center" text="" font_size="15" color="[saParchment]" effect="outline" effect_color="[black]" />
+					</rect>
+					<rect name="btn6" pos="16,-654" width="160" height="36" controller="SimpleButton" visible="false" button_enabled="true">
+						<button depth="3" name="clickable" pos="0,0" width="160" height="36" pivot="topleft" sprite="menu_empty" defaultcolor="[saPanelRaised]" disabledcolor="[saInk]" hoversprite="menu_empty" hovercolor="[saPanelRaised]" selectedsprite="menu_empty" selectedcolor="[saPanelRaised]" type="sliced" hoverscale="1.0" collider_scale="1" sound="[paging_click]" />
+					<sprite depth="4" name="border" pos="0,0" width="160" height="36" pivot="topleft" sprite="menu_empty3px" color="[saBorder]" type="sliced" fillcenter="false" />
+					<sprite depth="5" name="hover" pos="0,0" width="160" height="36" pivot="topleft" sprite="menu_empty3px" color="[white]" type="sliced" fillcenter="false" visible="false" />
+						<sprite depth="5" name="icon" pos="6,-6" width="24" height="24" pivot="topleft" sprite="ui_game_symbol_hammer" color="[white]" visible="false" />
+						<label depth="5" name="btnLabel" pos="0,-18" width="160" height="34" pivot="left" justify="center" text="" font_size="15" color="[saParchment]" effect="outline" effect_color="[black]" />
+					</rect>
+					<rect name="btn7" pos="184,-654" width="160" height="36" controller="SimpleButton" visible="false" button_enabled="true">
+						<button depth="3" name="clickable" pos="0,0" width="160" height="36" pivot="topleft" sprite="menu_empty" defaultcolor="[saPanelRaised]" disabledcolor="[saInk]" hoversprite="menu_empty" hovercolor="[saPanelRaised]" selectedsprite="menu_empty" selectedcolor="[saPanelRaised]" type="sliced" hoverscale="1.0" collider_scale="1" sound="[paging_click]" />
+					<sprite depth="4" name="border" pos="0,0" width="160" height="36" pivot="topleft" sprite="menu_empty3px" color="[saBorder]" type="sliced" fillcenter="false" />
+					<sprite depth="5" name="hover" pos="0,0" width="160" height="36" pivot="topleft" sprite="menu_empty3px" color="[white]" type="sliced" fillcenter="false" visible="false" />
+						<sprite depth="5" name="icon" pos="6,-6" width="24" height="24" pivot="topleft" sprite="ui_game_symbol_hammer" color="[white]" visible="false" />
+						<label depth="5" name="btnLabel" pos="0,-18" width="160" height="34" pivot="left" justify="center" text="" font_size="15" color="[saParchment]" effect="outline" effect_color="[black]" />
+					</rect>
+					<rect name="btn8" pos="352,-654" width="160" height="36" controller="SimpleButton" visible="false" button_enabled="true">
+						<button depth="3" name="clickable" pos="0,0" width="160" height="36" pivot="topleft" sprite="menu_empty" defaultcolor="[saPanelRaised]" disabledcolor="[saInk]" hoversprite="menu_empty" hovercolor="[saPanelRaised]" selectedsprite="menu_empty" selectedcolor="[saPanelRaised]" type="sliced" hoverscale="1.0" collider_scale="1" sound="[paging_click]" />
+					<sprite depth="4" name="border" pos="0,0" width="160" height="36" pivot="topleft" sprite="menu_empty3px" color="[saBorder]" type="sliced" fillcenter="false" />
+					<sprite depth="5" name="hover" pos="0,0" width="160" height="36" pivot="topleft" sprite="menu_empty3px" color="[white]" type="sliced" fillcenter="false" visible="false" />
+						<sprite depth="5" name="icon" pos="6,-6" width="24" height="24" pivot="topleft" sprite="ui_game_symbol_hammer" color="[white]" visible="false" />
+						<label depth="5" name="btnLabel" pos="0,-18" width="160" height="34" pivot="left" justify="center" text="" font_size="15" color="[saParchment]" effect="outline" effect_color="[black]" />
+					</rect>
+					<rect name="btn9" pos="520,-654" width="160" height="36" controller="SimpleButton" visible="false" button_enabled="true">
+						<button depth="3" name="clickable" pos="0,0" width="160" height="36" pivot="topleft" sprite="menu_empty" defaultcolor="[saPanelRaised]" disabledcolor="[saInk]" hoversprite="menu_empty" hovercolor="[saPanelRaised]" selectedsprite="menu_empty" selectedcolor="[saPanelRaised]" type="sliced" hoverscale="1.0" collider_scale="1" sound="[paging_click]" />
+					<sprite depth="4" name="border" pos="0,0" width="160" height="36" pivot="topleft" sprite="menu_empty3px" color="[saBorder]" type="sliced" fillcenter="false" />
+					<sprite depth="5" name="hover" pos="0,0" width="160" height="36" pivot="topleft" sprite="menu_empty3px" color="[white]" type="sliced" fillcenter="false" visible="false" />
+						<sprite depth="5" name="icon" pos="6,-6" width="24" height="24" pivot="topleft" sprite="ui_game_symbol_hammer" color="[white]" visible="false" />
+						<label depth="5" name="btnLabel" pos="0,-18" width="160" height="34" pivot="left" justify="center" text="" font_size="15" color="[saParchment]" effect="outline" effect_color="[black]" />
+					</rect>
+					<rect name="btn10" pos="688,-654" width="160" height="36" controller="SimpleButton" visible="false" button_enabled="true">
+						<button depth="3" name="clickable" pos="0,0" width="160" height="36" pivot="topleft" sprite="menu_empty" defaultcolor="[saPanelRaised]" disabledcolor="[saInk]" hoversprite="menu_empty" hovercolor="[saPanelRaised]" selectedsprite="menu_empty" selectedcolor="[saPanelRaised]" type="sliced" hoverscale="1.0" collider_scale="1" sound="[paging_click]" />
+					<sprite depth="4" name="border" pos="0,0" width="160" height="36" pivot="topleft" sprite="menu_empty3px" color="[saBorder]" type="sliced" fillcenter="false" />
+					<sprite depth="5" name="hover" pos="0,0" width="160" height="36" pivot="topleft" sprite="menu_empty3px" color="[white]" type="sliced" fillcenter="false" visible="false" />
+						<sprite depth="5" name="icon" pos="6,-6" width="24" height="24" pivot="topleft" sprite="ui_game_symbol_hammer" color="[white]" visible="false" />
+						<label depth="5" name="btnLabel" pos="0,-18" width="160" height="34" pivot="left" justify="center" text="" font_size="15" color="[saParchment]" effect="outline" effect_color="[black]" />
+					</rect>
+					<rect name="btn11" pos="856,-654" width="160" height="36" controller="SimpleButton" visible="false" button_enabled="true">
+						<button depth="3" name="clickable" pos="0,0" width="160" height="36" pivot="topleft" sprite="menu_empty" defaultcolor="[saPanelRaised]" disabledcolor="[saInk]" hoversprite="menu_empty" hovercolor="[saPanelRaised]" selectedsprite="menu_empty" selectedcolor="[saPanelRaised]" type="sliced" hoverscale="1.0" collider_scale="1" sound="[paging_click]" />
+					<sprite depth="4" name="border" pos="0,0" width="160" height="36" pivot="topleft" sprite="menu_empty3px" color="[saBorder]" type="sliced" fillcenter="false" />
+					<sprite depth="5" name="hover" pos="0,0" width="160" height="36" pivot="topleft" sprite="menu_empty3px" color="[white]" type="sliced" fillcenter="false" visible="false" />
+						<sprite depth="5" name="icon" pos="6,-6" width="24" height="24" pivot="topleft" sprite="ui_game_symbol_hammer" color="[white]" visible="false" />
+						<label depth="5" name="btnLabel" pos="0,-18" width="160" height="34" pivot="left" justify="center" text="" font_size="15" color="[saParchment]" effect="outline" effect_color="[black]" />
+					</rect>
+				</rect>
+
+				<label depth="2" name="footer" pos="20,-792" width="1320" height="20" text="F7 or F6 toggles Server Assist  |  Click a card to launch  |  Right-click a card to favorite" font_size="13" color="[saMuted]" />
+			</rect>
+		</window>
+	</append>
+</configs>

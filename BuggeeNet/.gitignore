@@ -1,0 +1,11 @@
+# Local decompiler output — reference only, never ship.
+_recon/
+
+# Build output
+tests/**/bin/
+tests/**/obj/
+**/bin/
+**/obj/
+
+# Local Redis data (if you switch compose to a bind mount)
+docker/data/

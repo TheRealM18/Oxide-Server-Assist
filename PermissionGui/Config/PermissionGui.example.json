@@ -1,0 +1,27 @@
+{
+  "ChatPrefix": "Permissions:",
+  "DefaultGroup": "default",
+  "DefaultPermissions": [
+    "permissiongui.use"
+  ],
+  "ApplyDefaultsOnLoad": true,
+  "ApplyDefaultsOnPlayerConnect": true,
+  "ApplyDefaultsOncePerPlayer": true,
+  "GrantDefaultsDirectlyToPlayer": true,
+  "CreateDefaultGroup": true,
+  "AddDefaultGroupForTrackUsers": false,
+  "GrantAdminPermissionsToAdminGroup": true,
+  "AdminWildcard": "oxide.*",
+  "RequireWildcardForAdmin": true,
+  "GrantAllPermissionsToAdmin": true,
+  "AutoGrantUse": [],
+  "AutoGrantAdmin": [
+    "76561198044563889"
+  ],
+  "Tracks": {
+    "staff": [
+      "default"
+    ]
+  },
+  "MaxRows": 10
+}

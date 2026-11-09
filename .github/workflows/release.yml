@@ -1,0 +1,56 @@
+name: Build Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Release version (also used as the tag, for example v2.1.0)"
+        required: true
+        type: string
+        default: "v2.1.0"
+      publish_release:
+        description: "Create a GitHub Release and upload the ZIPs"
+        required: true
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+
+jobs:
+  package:
+    name: Package release assets
+    runs-on: windows-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Package ZIPs
+        shell: pwsh
+        run: ./build/release.ps1 -Version "${{ inputs.version }}"
+
+      - name: Upload workflow artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: oxide-release-${{ inputs.version }}
+          path: |
+            release-out/*.zip
+            release-out/SHA256SUMS.txt
+          if-no-files-found: error
+
+      - name: Create GitHub Release
+        if: ${{ inputs.publish_release }}
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ inputs.version }}
+          name: Server Assist ${{ inputs.version }}
+          body: |
+            Server Assist release ${{ inputs.version }}.
+
+            Includes individual plugin ZIPs, grouped plugin/mod/program ZIPs and an all-in-one ZIP.
+          files: |
+            release-out/*.zip
+            release-out/SHA256SUMS.txt
+          draft: false
+          prerelease: false
