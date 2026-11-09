@@ -574,6 +574,14 @@ namespace Oxide.Plugins
                 LogWarning("active profile '" + active.Name + "' was saved with a different item ID layout. " +
                            "The new mods may mis-map items. Restore a profile backup, or reorder the new item mod so it loads last.");
             }
+            else if (active.ItemCount <= 0 &&
+                     !string.IsNullOrEmpty(active.ModHash) &&
+                     !string.Equals(active.ModHash, modHash, StringComparison.OrdinalIgnoreCase))
+            {
+                LogWarning("active profile '" + active.Name + "' has no item-map metadata and the mod set changed. " +
+                           "If the new mod inserted items before existing mods, items may be mis-mapped. " +
+                           "Back up oxide/data/PlayerProfiles and check after login.");
+            }
 
             string vanilla = VanillaPath(clientInfo);
             bool vanillaExists = File.Exists(vanilla);
