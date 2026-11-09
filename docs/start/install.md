@@ -86,6 +86,21 @@ The ready-to-ship zip may rename the outer folder to `AA0_ServerAssistMod` so it
 
 ---
 
+## Companion plugins, client mods and programs
+
+Server Assist is the base package. Everything else is optional and documented individually:
+
+| Component | Installed as | Full reference |
+|---|---|---|
+| Companion plugins | `.cs` files in `oxide/plugins/` | [Plugins](../plugins/index.md) |
+| Client mods | folders under `Mods/` | [Client mods](../plugins/client/index.md) |
+| Standalone programs | services or tools outside the game/ Oxide | [Programs](../plugins/programs/index.md) |
+| Art pack | `UIAtlases/UIAtlas` inside the Server Assist mod or a separate atlas mod | [Server Assist Art](../plugins/art/server-assist-art.md) |
+
+Use the individual plugin page for its commands, permission nodes, config defaults and data paths.
+
+---
+
 ## Client install
 
 Do this for **every** player who should see the board, not only admins.

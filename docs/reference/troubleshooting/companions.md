@@ -1,6 +1,6 @@
 # Companion problems
 
-Part of [Troubleshooting](index.md).
+Part of [Troubleshooting](index.md). For install, command, permission and configuration details, use the [plugin reference](../../plugins/index.md).
 
 ## Icons and item icons
 
@@ -272,6 +272,6 @@ The client closes cursor windows and rebuilds the toolbelt, backpack, equipment 
 
 Files live under `oxide/data/PlayerProfiles/<safe-player-id>/`. Keep the `.bak1` / `.bak2` files; an unreadable profile falls back to them. The vanilla save is never edited in place.
 
-More: [PlayerProfiles](../../integration/companions/media-network.md#playerprofiles).
+More: [PlayerProfiles](../../plugins/player/player-profiles.md).
 
 ---

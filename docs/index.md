@@ -66,7 +66,8 @@ The result is one installation, one keybind, one visual language, and a per-butt
 | Icon picker | Search internal and localized item names, preview, click to assign | [Item Search](core/item-search.md) |
 | Permissions | `serverassist.use`, `.admin`, `.custom`, `.button.*`, `.personal.*` | [Permissions](core/permissions.md) |
 | API | Panels, hooks, providers, icon read-back, `@pp\|` companion protocols, view protocol | [API](integration/api/index.md) |
-| Companions | PermissionGui, AdminShop, AuctionHouse, VoteSkipNight, AdminKits, AdminSuite, DailyRewards, DynamicBackpack, PluginHotReload, TwitchIntegration, BuggeeNet, PlayerProfiles | [Companion Integration](integration/companions/index.md) |
+| Plugins | Full reference pages for every plugin, client mod, program and art pack | [Plugins](plugins/index.md) |
+| Companions | Integration recipes and the companion registration matrix | [Companion Integration](integration/companions/index.md) |
 | Backpack | Server-only panel with nine pages of nine item cards | [Dynamic Backpack](integration/dynamic-backpack.md) |
 | Upgrades | Command, permission, path and API mappings | [Migration](reference/migration/index.md) |
 | Support | Diagnostics, logs, common failures | [Troubleshooting](reference/troubleshooting/index.md) |
@@ -143,7 +144,7 @@ Server Assist supports two ways for another plugin to take over the content pane
 
 A companion plugin registers a home-row entry. The player clicks the row and Server Assist enters **hook mode**: the Home / Shared / My Buttons tabs disappear, a **Back** button appears, and every action is forwarded to the companion until the player leaves.
 
-Use this for a self-contained feature that should look like one more tool on the board: PermissionGui, AdminShop, VoteSkipNight, AdminKits, AdminSuite, DailyRewards, DynamicBackpack, PluginHotReload, TwitchIntegration and BuggeeNet.
+Use this for a self-contained feature that should look like one more tool on the board: PermissionGui, AdminShop, VoteSkipNight, AdminKits, AdminSuite, DailyRewards, DynamicBackpack, PluginHotReload, TwitchIntegration, BuggeeNet and PlayerProfiles.
 
 ```csharp
 Plugin serverAssist = plugins.Find("ServerAssist");
@@ -262,7 +263,7 @@ This documentation is built with MkDocs Material and published through Read the 
 Yes. XUi windows cannot be pushed from the server. Every player who should see the board needs the same `ServerAssist` folder.
 
 **Does a companion plugin need a client DLL?**
-No. PermissionGui, AdminShop, AuctionHouse, VoteSkipNight, AdminKits, AdminSuite, DailyRewards, PluginHotReload, TwitchIntegration, BuggeeNet and PlayerProfiles are server-only. They return the line protocol through the Server Assist client. PlayerProfiles can additionally use the optional `@pp|` companion protocol for in-place character switching.
+No. PermissionGui, AdminShop, AuctionHouse, VoteSkipNight, AdminKits, AdminSuite, DailyRewards, DynamicBackpack, PluginHotReload, TwitchIntegration, BuggeeNet and PlayerProfiles are server-only. They return the line protocol through the Server Assist client. PlayerProfiles can additionally use the optional `@pp|` companion protocol for in-place character switching.
 
 **Can players make their own buttons?**
 Yes, with `serverassist.custom` and `AllowPlayerCustomButtons`. Player-made command buttons are disabled unless `AllowPlayerCommandButtons` is enabled.

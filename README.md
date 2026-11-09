@@ -12,6 +12,8 @@ The documentation is built with **MkDocs Material** and published through **Read
 
 The published site uses nested folders, so every page is served as an `index.html` under its category path.
 
+The docs include a full reference page for every bundled plugin, client mod, program and art pack under `docs/plugins/`.
+
 ## Projects
 
 | Project | Type |

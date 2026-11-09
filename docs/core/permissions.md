@@ -308,6 +308,8 @@ Use per-button nodes rather than `serverassist.admin` for tiered access.
 
 ## Companion page permissions
 
+Full command, permission and configuration tables for every plugin live in the [plugin reference](../plugins/index.md). The sections below cover the shared Server Assist rules and the two most commonly adjusted companion permission sets.
+
 Companion panels keep their own nodes. DynamicBackpack, for example, uses page nodes rather than Server Assist button nodes:
 
 ```text
@@ -327,7 +329,7 @@ playerprofiles.slots.*          every configured slot
 playerprofiles.admin            MaxSlots, Reload and /profile reload
 ```
 
-Reducing a slot permission never deletes existing profiles; it only blocks creating new ones until the player is under the limit. These nodes belong to PlayerProfiles, not to Server Assist. See [PlayerProfiles](../integration/companions/media-network.md#playerprofiles).
+Reducing a slot permission never deletes existing profiles; it only blocks creating new ones until the player is under the limit. These nodes belong to PlayerProfiles, not to Server Assist. See [PlayerProfiles](../plugins/player/player-profiles.md).
 
 ---
 
@@ -347,7 +349,7 @@ It can list, grant and revoke Server Assist's per-button nodes like any other re
 
 PermissionGui also applies configured defaults. Do not mix a `DefaultPermissions` entry for `serverassist.admin` with a group grant unless that is intentional.
 
-See [Companion Integration](../integration/companions/core.md#permissiongui).
+See [PermissionGui](../plugins/administration/permission-gui.md).
 
 ---
 

@@ -44,10 +44,11 @@ All companion plugins are **server-only**. They ship no client DLL and no XUi XM
 
 | Page | Covers |
 |---|---|
-| [Core companions](core.md) | PermissionGui, AdminShop and AuctionHouse |
-| [Staff and utility companions](staff-utility.md) | VoteSkipNight, AdminKits, AdminSuite, DailyRewards, DynamicBackpack and PluginHotReload |
-| [Media and network companions](media-network.md) | TwitchIntegration, BuggeeNet and PlayerProfiles |
+| [Core companions](core.md) | PermissionGui, AdminShop and AuctionHouse integration recipes |
+| [Staff and utility companions](staff-utility.md) | VoteSkipNight, AdminKits, AdminSuite, DailyRewards, DynamicBackpack and PluginHotReload integration recipes |
+| [Media and network companions](media-network.md) | TwitchIntegration, BuggeeNet and PlayerProfiles integration recipes |
 | [Writing a companion](authoring.md) | Checklist, registration helpers, full example, testing and rules |
+| [Plugin reference](../../plugins/index.md) | Full install, command, permission and configuration pages for every bundled plugin |
 
 
 ---

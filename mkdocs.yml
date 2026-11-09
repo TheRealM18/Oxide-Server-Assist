@@ -66,6 +66,39 @@ nav:
       - Icons: core/icons.md
       - Item search: core/item-search.md
       - Permissions: core/permissions.md
+  - Plugins:
+      - Overview: plugins/index.md
+      - Administration:
+          - Overview: plugins/administration/index.md
+          - PermissionGui: plugins/administration/permission-gui.md
+          - AdminSuite: plugins/administration/admin-suite.md
+          - AdminKits: plugins/administration/admin-kits.md
+      - Economy:
+          - Overview: plugins/economy/index.md
+          - Admin Shop: plugins/economy/admin-shop.md
+          - Auction House: plugins/economy/auction-house.md
+      - Player features:
+          - Overview: plugins/player/index.md
+          - Daily Rewards: plugins/player/daily-rewards.md
+          - Dynamic Backpack: integration/dynamic-backpack.md
+          - Player Profiles: plugins/player/player-profiles.md
+          - Vote Skip Night: plugins/player/vote-skip-night.md
+      - Server utilities:
+          - Overview: plugins/utilities/index.md
+          - Plugin Hot Reload: plugins/utilities/plugin-hot-reload.md
+          - Twitch Integration: plugins/utilities/twitch-integration.md
+          - BuggeeNet: plugins/utilities/buggee-net.md
+      - Client mods:
+          - Overview: plugins/client/index.md
+          - Server Assist Mod: plugins/client/server-assist-mod.md
+          - QLN Pack Bootstrap: plugins/client/qln-pack-bootstrap.md
+      - Programs:
+          - Overview: plugins/programs/index.md
+          - QLN Pack Server: plugins/programs/qln-pack-server.md
+          - TwitchRelay: plugins/programs/twitch-relay.md
+      - Art and assets:
+          - Overview: plugins/art/index.md
+          - Server Assist Art: plugins/art/server-assist-art.md
   - Integration:
       - Overview: integration/index.md
       - API:

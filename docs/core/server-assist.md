@@ -356,5 +356,6 @@ Server Assist 2.1 adds optional `icon` and `tint` fields to `btn=` lines. The 2.
 - [Buttons](buttons.md)
 - [Permissions](permissions.md)
 - [API](../integration/api/index.md)
+- [Plugins](../plugins/index.md)
 - [Dynamic Backpack](../integration/dynamic-backpack.md)
 - [Migration](../reference/migration/index.md)

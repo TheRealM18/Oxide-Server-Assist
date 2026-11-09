@@ -4,6 +4,8 @@ Part of the [FAQ](index.md).
 
 ## API and companions
 
+Full installation, command and configuration pages for each bundled plugin live in the [plugin reference](../../plugins/index.md).
+
 ### How does a plugin add a row?
 
 ```csharp
