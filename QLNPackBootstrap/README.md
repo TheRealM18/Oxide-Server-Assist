@@ -87,8 +87,9 @@ applies the pack; that is why a restart is required.
      `DefaultPackId` chooses the first-run pack, and `DefaultPackName` labels the
      legacy single-pack profile. Local `<Packs>` entries win over remote entries
      with the same id.
-   - `MaxParallelDownloads` to control parallel downloads. Default `4`; range
-     `1`–`10`. Google Drive often throttles above 3–4 connections.
+   - `MaxParallelDownloads` to control parallel downloads. Default `10`; range
+     `1`–`10`. Lower it to 3–4 if you still use Google Drive, which often
+     throttles higher connection counts.
    - Optionally paste `public-key.xml` into `PublicKeyXml` and set
      `RequireSignature` to `true`.
 

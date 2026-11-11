@@ -441,6 +441,26 @@ namespace CoreHarness
                 multi.FindPack("other") != null,
                 "profiles missing");
 
+            File.WriteAllText(
+                PackPaths.ConfigFile,
+                "<PackBootstrap>" +
+                "<PackIndexUrl>https://cdn.example.com/packs.json</PackIndexUrl>" +
+                "<DefaultPackId>mod-main</DefaultPackId>" +
+                "</PackBootstrap>",
+                new UTF8Encoding(false));
+
+            PackConfig remoteOnly = PackConfig.Load(PackPaths.ConfigFile);
+            Check("remote-only config default", remoteOnly.DefaultPackId == "mod-main", remoteOnly.DefaultPackId);
+            Check("remote-only starts with vanilla", remoteOnly.Packs.Count == 1 && remoteOnly.Packs[0].IsVanilla, "unexpected local packs");
+
+            PackIndex remoteIndex = JsonConvert.DeserializeObject<PackIndex>(
+                "{\"packs\":[{\"id\":\"mod-main\",\"name\":\"Main Server\",\"manifestUrl\":\"https://cdn.example.com/mod-main/manifest.json\",\"gameVersion\":\"3.4\"}]}");
+            Check("remote index parse",
+                remoteIndex != null && remoteIndex.Packs.Count == 1 &&
+                remoteIndex.Packs[0].Id == "mod-main" &&
+                remoteIndex.Packs[0].ManifestUrl.EndsWith("/manifest.json", StringComparison.Ordinal),
+                "index parse failed");
+
             File.Delete(PackPaths.ConfigFile);
         }
 

@@ -49,7 +49,25 @@ public sealed class RelayConfig
         if (File.Exists(path))
         {
             string json = File.ReadAllText(path);
-            config = JsonSerializer.Deserialize<RelayConfig>(json, JsonOptions) ?? new RelayConfig();
+            try
+            {
+                config = JsonSerializer.Deserialize<RelayConfig>(json, JsonOptions) ?? new RelayConfig();
+            }
+            catch (JsonException ex)
+            {
+                Console.Error.WriteLine("[MediaRelay] relay.json is not valid JSON.");
+                Console.Error.WriteLine("  File: " + path);
+                if (ex.LineNumber.HasValue)
+                {
+                    Console.Error.WriteLine("  Line: " + (ex.LineNumber.Value + 1) +
+                                            ", byte: " + (ex.BytePositionInLine ?? 0));
+                }
+
+                Console.Error.WriteLine("  " + ex.Message);
+                Console.Error.WriteLine("Fix the file, or move it aside and run MediaRelay once to regenerate a valid starter config.");
+                Environment.Exit(1);
+                config = new RelayConfig();
+            }
         }
         else
         {

@@ -29,7 +29,7 @@ namespace QLNPackBootstrap
         public string AccessToken = "";
         public bool AutoRestart = true;
         public string ModsRoot = "";
-        public int MaxParallelDownloads = 4;
+        public int MaxParallelDownloads = 10;
 
         public string PackIndexUrl = "";
         public string DefaultPackId = "";
@@ -82,7 +82,7 @@ namespace QLNPackBootstrap
             config.AccessToken = Get(root, "AccessToken", "");
             config.AutoRestart = GetBool(root, "AutoRestart", true);
             config.ModsRoot = Get(root, "ModsRoot", "");
-            config.MaxParallelDownloads = GetInt(root, "MaxParallelDownloads", 4);
+            config.MaxParallelDownloads = GetInt(root, "MaxParallelDownloads", 10);
             config.PackIndexUrl = Get(root, "PackIndexUrl", "");
             config.DefaultPackId = Get(root, "DefaultPackId", "");
             config.DefaultPackName = Get(root, "DefaultPackName", "Server Pack");

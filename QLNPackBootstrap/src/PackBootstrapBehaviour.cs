@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
@@ -93,8 +94,7 @@ namespace QLNPackBootstrap
                 : _config.DefaultPackId;
             _activePack = FindPack(activeId);
 
-            if (_activePack == null &&
-                (string.IsNullOrEmpty(_config.PackIndexUrl) || string.IsNullOrEmpty(state.ActivePackId)))
+            if (_activePack == null && string.IsNullOrEmpty(_config.PackIndexUrl))
             {
                 _activePack = _config.DefaultPack;
             }
@@ -425,7 +425,7 @@ namespace QLNPackBootstrap
 
             _state = PackInstaller.LoadState();
 
-            if (_activePack == null)
+            if (_activePack == null && string.IsNullOrEmpty(_config.PackIndexUrl))
             {
                 _activePack = FindPack(_state.ActivePackId) ?? _config.DefaultPack;
             }
@@ -434,10 +434,29 @@ namespace QLNPackBootstrap
             {
                 yield return RefreshPackIndexRoutine();
                 _forcePackIndexRefresh = false;
+            }
+
+            if (_activePack == null)
+            {
+                _activePack = FindPack(_state.ActivePackId);
+                if (_activePack == null)
+                {
+                    _activePack = _config.FindPack(_config.DefaultPackId);
+                }
 
                 if (_activePack == null)
                 {
-                    _activePack = FindPack(_state.ActivePackId) ?? _config.DefaultPack;
+                    if (!string.IsNullOrEmpty(_config.PackIndexUrl) &&
+                        !string.Equals(_config.DefaultPackId, "vanilla", StringComparison.OrdinalIgnoreCase))
+                    {
+                        _ui = UiState.Error;
+                        _error = "Could not load the pack index from " + _config.PackIndexUrl +
+                                 ". Check the CDN URL, server, and firewall.";
+                        _checking = false;
+                        yield break;
+                    }
+
+                    _activePack = _config.DefaultPack;
                 }
             }
 
@@ -732,6 +751,49 @@ namespace QLNPackBootstrap
         {
             string currentUrl = PackDownloadResolver.Normalize(url);
 
+            if (currentUrl.StartsWith("http://", StringComparison.OrdinalIgnoreCase))
+            {
+                if (_config == null || !_config.AllowInsecureHttp)
+                {
+                    onError("Plain HTTP is disabled. Use HTTPS or set AllowInsecureHttp=true.");
+                    yield break;
+                }
+
+                Task<byte[]> task = Task.Run(() => DownloadBytesSystem(currentUrl, maxBytes));
+                while (!task.IsCompleted)
+                {
+                    yield return null;
+                }
+
+                if (task.IsFaulted)
+                {
+                    onError(Unwrap(task.Exception));
+                    yield break;
+                }
+
+                byte[] directData = task.Result;
+                if (directData == null || directData.Length == 0)
+                {
+                    onError("The server returned an empty response.");
+                    yield break;
+                }
+
+                if (maxBytes > 0 && directData.Length > maxBytes)
+                {
+                    onError("The response is larger than the configured limit.");
+                    yield break;
+                }
+
+                if (PackDownloadResolver.IsHtml(directData))
+                {
+                    onError("The URL returned an HTML page instead of a file.");
+                    yield break;
+                }
+
+                onSuccess(directData);
+                yield break;
+            }
+
             for (int attempt = 0; attempt < 2; attempt++)
             {
                 byte[] data = null;
@@ -796,6 +858,34 @@ namespace QLNPackBootstrap
 
                 onSuccess(data);
                 yield break;
+            }
+        }
+
+        private static byte[] DownloadBytesSystem(string url, int maxBytes)
+        {
+            using (WebClient client = new WebClient())
+            {
+                client.Proxy = null;
+                client.Headers[HttpRequestHeader.UserAgent] = "QLNPackBootstrap/0.1";
+
+                using (Stream stream = client.OpenRead(url))
+                using (MemoryStream memory = new MemoryStream())
+                {
+                    byte[] buffer = new byte[64 * 1024];
+                    int read;
+
+                    while ((read = stream.Read(buffer, 0, buffer.Length)) > 0)
+                    {
+                        if (maxBytes > 0 && memory.Length + read > maxBytes)
+                        {
+                            throw new InvalidDataException("The response is larger than the configured limit.");
+                        }
+
+                        memory.Write(buffer, 0, read);
+                    }
+
+                    return memory.ToArray();
+                }
             }
         }
 
@@ -1007,6 +1097,16 @@ namespace QLNPackBootstrap
 
                     foreach (DownloadJob job in batch)
                     {
+                        if (job.Client != null)
+                        {
+                            if (job.ClientCompleted)
+                            {
+                                CompleteDownload(job);
+                            }
+
+                            continue;
+                        }
+
                         if (job.Request == null)
                         {
                             continue;
@@ -1155,11 +1255,64 @@ namespace QLNPackBootstrap
                 job.Operation = null;
             }
 
+            if (job.Client != null)
+            {
+                try
+                {
+                    job.Client.CancelAsync();
+                    job.Client.Dispose();
+                }
+                catch
+                {
+                    // Best effort.
+                }
+
+                job.Client = null;
+            }
+
+            job.ClientCompleted = false;
+            job.ClientCancelled = false;
+            job.ClientError = null;
+
             try
             {
                 if (File.Exists(job.ZipPath))
                 {
                     File.Delete(job.ZipPath);
+                }
+
+                if (job.Url.StartsWith("http://", StringComparison.OrdinalIgnoreCase))
+                {
+                    if (_config == null || !_config.AllowInsecureHttp)
+                    {
+                        job.Error = "Plain HTTP is disabled. Use HTTPS or set AllowInsecureHttp=true.";
+                        job.State = DownloadState.Failed;
+                        return;
+                    }
+
+                    WebClient client = new WebClient();
+                    client.Proxy = null;
+                    client.Headers[HttpRequestHeader.UserAgent] = "QLNPackBootstrap/0.1";
+                    client.DownloadProgressChanged += (sender, args) =>
+                    {
+                        job.Progress = args.ProgressPercentage / 100f;
+                    };
+                    client.DownloadFileCompleted += (sender, args) =>
+                    {
+                        job.ClientCompleted = true;
+                        job.ClientCancelled = args.Cancelled;
+                        if (args.Error != null)
+                        {
+                            job.ClientError = args.Error.Message;
+                        }
+                    };
+
+                    job.Client = client;
+                    job.State = DownloadState.Downloading;
+                    job.Progress = 0f;
+                    job.Error = null;
+                    client.DownloadFileAsync(new Uri(job.Url), job.ZipPath);
+                    return;
                 }
 
                 UnityWebRequest request = UnityWebRequest.Get(job.Url);
@@ -1183,6 +1336,74 @@ namespace QLNPackBootstrap
 
         private void CompleteDownload(DownloadJob job)
         {
+            if (job.Client != null)
+            {
+                WebClient client = job.Client;
+                job.Client = null;
+                job.ClientCompleted = false;
+
+                try
+                {
+                    client.Dispose();
+                }
+                catch
+                {
+                    // Best effort.
+                }
+
+                if (job.ClientCancelled)
+                {
+                    job.Error = "Download cancelled.";
+                    job.State = DownloadState.Failed;
+                    return;
+                }
+
+                if (!string.IsNullOrEmpty(job.ClientError))
+                {
+                    job.Error = job.ClientError;
+                    job.State = DownloadState.Failed;
+                    return;
+                }
+
+                if (!File.Exists(job.ZipPath))
+                {
+                    job.Error = "The downloaded file is missing.";
+                    job.State = DownloadState.Failed;
+                    return;
+                }
+
+                if (PackDownloadResolver.IsHtmlFile(job.ZipPath))
+                {
+                    job.Error =
+                        "The URL returned an HTML page instead of a zip. " +
+                        "Use a direct download link, or make the shared file public.";
+                    job.State = DownloadState.Failed;
+                    return;
+                }
+
+                long directLength = 0;
+                try
+                {
+                    directLength = new FileInfo(job.ZipPath).Length;
+                }
+                catch
+                {
+                    // Size check below will fail.
+                }
+
+                if (job.Change.Mod.Size > 0 && directLength != job.Change.Mod.Size)
+                {
+                    job.Error = "Downloaded " + directLength +
+                                " bytes, expected " + job.Change.Mod.Size + ".";
+                    job.State = DownloadState.Failed;
+                    return;
+                }
+
+                job.State = DownloadState.Downloaded;
+                job.Progress = 1f;
+                return;
+            }
+
             UnityWebRequest request = job.Request;
             job.Request = null;
             job.Operation = null;
@@ -1304,25 +1525,42 @@ namespace QLNPackBootstrap
 
             foreach (DownloadJob job in _jobs)
             {
-                if (job.Request == null)
+                bool hadActiveRequest = false;
+
+                if (job.Client != null)
                 {
-                    continue;
+                    try
+                    {
+                        job.Client.CancelAsync();
+                        job.Client.Dispose();
+                    }
+                    catch
+                    {
+                        // Best effort.
+                    }
+
+                    job.Client = null;
+                    hadActiveRequest = true;
                 }
 
-                try
+                if (job.Request != null)
                 {
-                    job.Request.Abort();
-                    job.Request.Dispose();
-                }
-                catch
-                {
-                    // Best effort.
+                    try
+                    {
+                        job.Request.Abort();
+                        job.Request.Dispose();
+                    }
+                    catch
+                    {
+                        // Best effort.
+                    }
+
+                    job.Request = null;
+                    job.Operation = null;
+                    hadActiveRequest = true;
                 }
 
-                job.Request = null;
-                job.Operation = null;
-
-                if (job.State == DownloadState.Downloading)
+                if (hadActiveRequest && job.State == DownloadState.Downloading)
                 {
                     job.State = DownloadState.Failed;
                 }
@@ -2303,6 +2541,10 @@ namespace QLNPackBootstrap
             public string ZipPath;
             public UnityWebRequest Request;
             public UnityWebRequestAsyncOperation Operation;
+            public WebClient Client;
+            public bool ClientCompleted;
+            public bool ClientCancelled;
+            public string ClientError;
             public DownloadState State = DownloadState.Pending;
             public float Progress;
             public int Attempt;

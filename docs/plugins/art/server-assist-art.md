@@ -1,6 +1,6 @@
 # Server Assist Art
 
-> **Version:** 1.3.0 (art pack) · **Type:** client-side UI atlas / icon pack · **Source:** [ServerAssistArt](https://github.com/TheRealM18/Oxide-Server-Assist/tree/main/ServerAssistArt)
+> **Version:** 1.4.0 (art pack) · **Type:** client-side UI atlas / icon pack · **Source:** [ServerAssistArt](https://github.com/TheRealM18/Oxide-Server-Assist/tree/main/ServerAssistArt)
 
 Server Assist Art is the hand-painted icon set for the companion plugins that
 render inside the Server Assist window. The icons replace the generic
@@ -44,27 +44,17 @@ manifest and no XML edit.
 ```text
 ServerAssistArt/
   icons/                     high-resolution masters (mixed sizes, transparent)
-    _sheets/                 2x2 source sheets for the Admin Tools batch
+    _sheets/                 source sheets for the batch
   bonus/                     optional Server Assist mark (not part of the set)
   preview/                   256x256 previews (generated)
   UIAtlases/UIAtlas/         128x128 game-ready PNGs (generated)
   contact-sheet.png          labelled overview of the finished icons
   tools/build-icons.ps1      rebuilds previews, atlas PNGs and the contact sheet
-  tools/slice-sheet.ps1      splits a 2x2 sheet into four masters
+  tools/slice-sheet.ps1      splits a sheet into masters
   README.md                  overview and icon map
-  ICON_PRIORITY.md           final audit and current remaining work
-  ICON_REQUEST.md            PlayerProfiles request
-  PLANNED_ICONS.md           future batches
-  PLANNED_STREAMING_ICONS.md streaming sprite notes
-  VOTESKIPNIGHT_ICON_REQUEST.md
-  REQUESTS_AdminKits.md
-  REQUESTS_AdminShop.md
-  REQUESTS_AdminSuite.md
-  REQUESTS_AUCTIONHOUSE.md
-  REQUESTS_DAILYREWARDS.md
-  REQUESTS_SentinelAC.md
-  REQUESTS_TwitchIntegration.md
-  REQUESTED_PLUGIN_HOT_RELOAD_ICONS.md
+  ICON_PRIORITY.md           final audit and delivered inventory
+  REQUESTS_MediaIntegration.md  current MediaIntegration naming reference
+  REQUESTS_TwitchIntegration.md legacy Twitch-only naming reference
 ```
 
 `icons/` is the source of truth. `preview/`, `UIAtlases/UIAtlas/` and
@@ -74,16 +64,13 @@ ServerAssistArt/
 
 | Measure | Value |
 |---|---|
-| Unique painted icons delivered | **60** (P0 + P1, per `ICON_PRIORITY.md`) |
-| Remaining requested icons | **42**: **30** P2 (Twitch buffs/debuffs and AdminSuite actions) plus **12** SentinelAC `sa_ac_*` follow-up icons |
-| PNGs currently in `UIAtlases/UIAtlas` | **162**, including legacy aliases |
-| Masters in `icons/` | **94** PNGs |
-| Previews in `preview/` | **94** PNGs |
+| Unique painted icons delivered | **102** (P0 + P1 + P2, per `ICON_PRIORITY.md`) |
+| Remaining requested icons | **0** |
+| PNGs currently in `UIAtlases/UIAtlas` | **186**, including legacy aliases |
+| Masters in `icons/` | **136** PNGs |
+| Previews in `preview/` | **136** PNGs |
 
-The older README status line of "34 icons" describes the first batch. The
-`ICON_PRIORITY.md` audit is the current reconciliation. The atlas keeps the 48
-`sa_stream_*` legacy aliases because TwitchIntegration still references them for
-config migration. Fifteen unreferenced `sa_announce_*` aliases were removed.
+Pack `1.4.0` completes the P2 batch: MediaIntegration buffs/debuffs, AdminSuite actions and SentinelAC provider icons. The atlas keeps the 48 `sa_stream_*` legacy aliases because MediaIntegration still uses them for config migration. Fifteen unreferenced `sa_announce_*` aliases were removed.
 
 ---
 
@@ -111,7 +98,7 @@ config migration. Fifteen unreferenced `sa_announce_*` aliases were removed.
 
 Ship the atlas as its own client mod, commonly `AAZ_ServerAssistArt`, so it loads
 after the Server Assist folder. The current release package is
-`AAZ_ServerAssistArt-1.3.0`. Clients that use the separate pack still need the
+`AAZ_ServerAssistArt-1.4.0`. Clients that use the separate pack still need the
 Server Assist client mod; the art folder only supplies sprites.
 
 ### Atlas target
@@ -194,35 +181,18 @@ files.
 | DailyRewards | 3 | `sa_rewards_weekly`, `sa_rewards_monthly`, `sa_rewards_seasonal` |
 | VoteSkipNight | 4 | `sa_vote_yes`, `sa_vote_no`, `sa_vote_cancel`, `sa_vote_bloodmoon` |
 | BuggeeNet | 4 | `sa_buggee_panel`, `sa_buggee_home`, `sa_buggee_info`, `sa_buggee_warn` |
-| Twitch panel/navigation | 12 | `sa_stream_panel`, `sa_stream_home`, `sa_stream_tier_1`, `sa_stream_link` |
+| MediaIntegration panel/navigation | 12 | `sa_stream_panel`, `sa_stream_home`, `sa_stream_tier_1`, `sa_stream_link` |
+| MediaIntegration buffs | 9 | `sa_stream_buff_quick_feet`, `sa_stream_buff_regen`, `sa_stream_buff_looter` |
+| MediaIntegration debuffs | 9 | `sa_stream_debuff_heavy_legs`, `sa_stream_debuff_no_running`, `sa_stream_debuff_encumbered` |
+| AdminSuite actions | 12 | `sa_act_kill`, `sa_act_note`, `sa_act_clear`, `sa_act_jail`, `sa_act_rollback` |
+| SentinelAC | 12 | `sa_ac_panel`, `sa_ac_risk`, `sa_ac_evidence`, `sa_ac_modules`, `sa_ac_clear` |
 
-The P2 streaming set is still requested in
-`REQUESTS_TwitchIntegration.md`: 30 sprites covering 9 buffs, 9 debuffs and 12
-AdminSuite actions.
+All 30 MediaIntegration `sa_stream_*` sprites are delivered in `1.4.0`.
+`REQUESTS_MediaIntegration.md` is retained as the naming reference.
 
-### Requested follow-up: SentinelAC (`sa_ac_*`)
+### SentinelAC (`sa_ac_*`)
 
-`SentinelAC` registers a Server Assist provider with three tabs: **Risk**,
-**Evidence**, and **Modules**. `REQUESTS_SentinelAC.md` asks for 12 dedicated
-`sa_ac_*` icons for that provider. They are **requested, not rendered**: the PNGs
-are not in `UIAtlases/UIAtlas/` yet, and no plugin config points at them.
-
-Until the set ships, SentinelAC uses existing finished sprites as placeholders:
-
-| SentinelAC use | Current placeholder |
-|---|---|
-| Provider card, banner, background | `sprite:sa_nav_moderation` |
-| Risk tab and risk rows | `sprite:sa_act_warn` |
-| Evidence tab and evidence rows | `sprite:sa_nav_logs` |
-| Modules tab | `sprite:sa_nav_server` |
-| Player rows | `sprite:sa_nav_players` |
-| Watch / unwatch | `sprite:sa_act_spectate` |
-| Clear evidence | `sprite:sa_nav_logs` |
-| Export evidence | `sprite:sa_nav_snapshots` |
-| Kick / ban / refresh | `sprite:sa_act_kick`, `sprite:sa_act_ban`, `sprite:sa_plugin_hot_reload` |
-| Module rows | `sprite:sa_nav_teleport`, `sprite:sa_nav_moderation`, `sprite:sa_nav_items`, `sprite:sa_nav_world`, `sprite:sa_act_godmode`, `sprite:sa_nav_snapshots` |
-
-The 12 requested keys:
+The 12 `sa_ac_*` icons are delivered in the atlas:
 
 | Sprite key | Used for |
 |---|---|
@@ -239,11 +209,7 @@ The 12 requested keys:
 | `sa_ac_clear` | Clear evidence button |
 | `sa_ac_export` | Export evidence button |
 
-The existing `sa_act_kick`, `sa_act_ban`, `sa_plugin_hot_reload`, `sa_act_prev`,
-`sa_act_next`, and `sa_nav_players` sprites stay in use and are not part of this
-request. After the art is rendered, the placeholder constants in
-`SentinelAC/oxide/plugins/SentinelAC.cs` are switched to the matching `sa_ac_*`
-keys.
+SentinelAC 1.0.2 still uses the older `sa_nav_*` / `sa_act_*` placeholders until its icon constants are switched to the delivered `sa_ac_*` keys. See [Sentinel AC](../administration/sentinel-ac.md#art-status).
 
 ---
 

@@ -218,7 +218,25 @@ not installed.
 10. **Rollback guard:** play offline on one server, then rejoin; the newer local `.ttp` should
     win over an older Redis snapshot.
 
-## 6. Known limitations
+## 6. Troubleshooting
+
+### `Stack overflow in unmanaged` at `TcpClient.ConnectAsync`
+
+Fixed in `0.2.1`. Redis connects used to be opened with `TcpClient.ConnectAsync` from the
+game thread. Unity's `SynchronizationContext` capture clones its pending work queue and can
+overflow the stack when it happens deep inside a hook such as `OnUserApprove`.
+
+Connects now run as a blocking `Connect` on an isolated background thread with
+`ExecutionContext.SuppressFlow()`, so no Task or Unity context is involved. Failed connects
+also enter a 5-second backoff, so a down Redis cannot cause a reconnect attempt on every
+game-thread command.
+
+### Panel icons show the hammer placeholder
+
+The four `sa_buggee_*` sprites are not rendered yet; the panel points at the interim
+`sa_stream_*` / `sa_nav_*` aliases. See `ICON_TODO.md`.
+
+## 7. Known limitations
 
 - **Manual reconnect.** Without a client mod the only redirect is a kick message. Players must
   paste/type the address. This is the accepted cost of milestone B.

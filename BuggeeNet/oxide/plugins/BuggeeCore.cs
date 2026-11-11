@@ -13,7 +13,7 @@ using UnityEngine;
 
 namespace Oxide.Plugins
 {
-    [Info("BuggeeCore", "BuggeeNet", "0.2.0")]
+    [Info("BuggeeCore", "BuggeeNet", "0.2.1")]
     [Description("Milestone B: fleet registry, safe handoff and shared player state over Redis. No client mod.")]
     public class BuggeeCore : CovalencePlugin
     {
@@ -214,24 +214,33 @@ namespace Oxide.Plugins
                 return;
             }
 
-            try
-            {
-                redis = new RedisClient(config.Redis);
-                redis.Connect();
-                redisReady = true;
-                PublishServerRecord();
-                LogInfo("Connected to Redis at " + config.Redis.Host + ":" + config.Redis.Port);
-            }
-            catch (Exception ex)
-            {
-                redisReady = false;
-                LogError("Redis connection failed: " + ex.Message);
-                LogWarning("Fleet features are offline. Players keep using local .ttp files.");
-            }
+            redis = new RedisClient(config.Redis);
+
+            // Connect off the game thread. A blocking DNS/connect must never stall the
+            // server, and hooks that run before it completes simply fail open to local saves.
+            ThreadPool.UnsafeQueueUserWorkItem(_ => InitialConnect(), null);
 
             heartbeatTimer = new System.Threading.Timer(_ => HeartbeatTick(), null,
                 config.Network.HeartbeatSeconds * 1000,
                 config.Network.HeartbeatSeconds * 1000);
+        }
+
+        private void InitialConnect()
+        {
+            try
+            {
+                redis.Connect();
+                redisReady = true;
+                PublishServerRecord();
+                Interface.Oxide.LogInfo("[BuggeeCore] connected to Redis at "
+                    + config.Redis.Host + ":" + config.Redis.Port);
+            }
+            catch (Exception ex)
+            {
+                redisReady = false;
+                Interface.Oxide.LogError("[BuggeeCore] Redis connection failed: " + ex.Message);
+                Interface.Oxide.LogWarning("[BuggeeCore] fleet features are offline; local .ttp saves still work.");
+            }
         }
 
         protected override void LoadDefaultConfig()
@@ -882,12 +891,15 @@ namespace Oxide.Plugins
 
         private void HeartbeatTick()
         {
-            if (!redisReady || redis == null)
+            if (!config.Redis.Enabled || redis == null)
                 return;
 
             try
             {
+                // PublishServerRecord drives EnsureOpen, so this tick is also the
+                // reconnect path once the backoff expires.
                 PublishServerRecord();
+                redisReady = true;
 
                 foreach (string pid in SnapshotOnline())
                 {
@@ -897,15 +909,14 @@ namespace Oxide.Plugins
             }
             catch (Exception ex)
             {
+                redisReady = false;
                 DebugLog("heartbeat failed: " + ex.Message);
-                try { redis.Connect(); }
-                catch { redisReady = false; }
             }
         }
 
         private void PublishServerRecord()
         {
-            if (!redisReady) return;
+            if (redis == null) return;
 
             string key = KeyServer(config.ServerId);
             redis.HSet(key, "id", config.ServerId);
@@ -1822,6 +1833,9 @@ namespace Oxide.Plugins
             private TcpClient tcp;
             private NetworkStream stream;
 
+            private DateTime nextConnectAttemptUtc = DateTime.MinValue;
+            private const int ConnectRetrySeconds = 5;
+
             public RedisClient(RedisOptions options)
             {
                 this.options = options;
@@ -1832,7 +1846,24 @@ namespace Oxide.Plugins
                 lock (gate)
                 {
                     CloseSocket();
+                    TryOpen();
+                }
+            }
+
+            private void TryOpen()
+            {
+                try
+                {
                     OpenSocket();
+                    nextConnectAttemptUtc = DateTime.MinValue;
+                }
+                catch
+                {
+                    // A failed AUTH/SELECT leaves tcp/stream non-null. Close them or the
+                    // next EnsureOpen would see a "connected" socket and skip the reconnect.
+                    CloseSocket();
+                    nextConnectAttemptUtc = DateTime.UtcNow.AddSeconds(ConnectRetrySeconds);
+                    throw;
                 }
             }
 
@@ -1844,22 +1875,55 @@ namespace Oxide.Plugins
                 }
             }
 
+            /// <summary>
+            /// Opens the socket on an isolated background thread.
+            ///
+            /// Do NOT use TcpClient.ConnectAsync (or any Task/APM helper) here: on the Unity
+            /// main thread it captures UnitySynchronizationContext, which clones the pending
+            /// WorkRequest queue and can overflow the stack from inside a deep hook such as
+            /// OnUserApprove. A blocking Connect on a fresh thread avoids ExecutionContext
+            /// capture entirely; SuppressFlow keeps the Unity context off that thread too.
+            /// </summary>
             private void OpenSocket()
             {
                 TcpClient client = new TcpClient();
                 client.NoDelay = true;
 
-                System.Threading.Tasks.Task connectTask = client.ConnectAsync(options.Host, options.Port);
-                if (!connectTask.Wait(options.ConnectTimeoutMs))
+                Exception connectError = null;
+                Thread connectThread = new Thread(() =>
+                {
+                    try
+                    {
+                        client.Connect(options.Host, options.Port);
+                    }
+                    catch (Exception ex)
+                    {
+                        connectError = ex;
+                    }
+                });
+                connectThread.IsBackground = true;
+                connectThread.Name = "BuggeeCore.RedisConnect";
+
+                if (!ExecutionContext.IsFlowSuppressed())
+                {
+                    using (ExecutionContext.SuppressFlow())
+                        connectThread.Start();
+                }
+                else
+                {
+                    connectThread.Start();
+                }
+
+                if (!connectThread.Join(options.ConnectTimeoutMs))
                 {
                     try { client.Close(); } catch { }
                     throw new TimeoutException("Redis connect timeout to " + options.Host + ":" + options.Port);
                 }
 
-                if (connectTask.IsFaulted)
+                if (connectError != null)
                 {
                     try { client.Close(); } catch { }
-                    throw new IOException("Redis connect failed", connectTask.Exception);
+                    throw new IOException("Redis connect failed: " + connectError.Message, connectError);
                 }
 
                 tcp = client;
@@ -1867,10 +1931,18 @@ namespace Oxide.Plugins
                 stream.ReadTimeout = options.CommandTimeoutMs;
                 stream.WriteTimeout = options.CommandTimeoutMs;
 
+                // Use Roundtrip, not WriteCommand: WriteCommand calls EnsureOpen and would
+                // re-enter the connect path while the socket is being set up.
                 if (!string.IsNullOrEmpty(options.Password))
-                    ExpectOk(WriteCommand("AUTH", options.Password));
+                    ExpectOk(Roundtrip("AUTH", options.Password));
 
-                ExpectOk(WriteCommand("SELECT", options.Database.ToString(CultureInfo.InvariantCulture)));
+                ExpectOk(Roundtrip("SELECT", options.Database.ToString(CultureInfo.InvariantCulture)));
+            }
+
+            private object Roundtrip(params object[] args)
+            {
+                WriteRaw(args);
+                return ReadReply();
             }
 
             private void CloseSocket()
@@ -1884,8 +1956,15 @@ namespace Oxide.Plugins
             private void EnsureOpen()
             {
                 if (tcp != null && tcp.Connected && stream != null) return;
+
                 CloseSocket();
-                OpenSocket();
+
+                // Fail fast instead of retrying a dead Redis from the game thread on every
+                // command. The heartbeat clears the backoff when it reconnects.
+                if (DateTime.UtcNow < nextConnectAttemptUtc)
+                    throw new IOException("Redis is unavailable (retry backoff active).");
+
+                TryOpen();
             }
 
             private static void ExpectOk(object reply)

@@ -1,20 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PackBootstrap>
   <!--
-    URL of the pack manifest. This can be:
-      - a Google Drive/Dropbox manifest share link,
-      - a static HTTPS URL,
-      - or a QLNPackServer URL such as http://203.0.113.10:8765/manifest.json.
+    Single-pack manifest URL. Leave empty when using PackIndexUrl below.
+    For a single static pack, put its manifest URL here instead.
   -->
-  <ManifestUrl>https://drive.google.com/file/d/REPLACE_MANIFEST_ID/view?usp=sharing</ManifestUrl>
+  <ManifestUrl></ManifestUrl>
 
-  <!-- Optional. Defaults to ManifestUrl + ".sig" when left empty. -->
+  <!-- Optional signature URL. Defaults to ManifestUrl + ".sig" when possible. -->
   <SignatureUrl></SignatureUrl>
 
-  <!--
-    Only for QLNPackServer. Leave empty for Google Drive/Dropbox/static hosting.
-    The bootstrap adds it to manifest and zip requests when set.
-  -->
+  <!-- Optional CDN/API token. Leave empty for a public static CDN. -->
   <AccessToken></AccessToken>
 
   <!--
@@ -26,22 +21,19 @@
   <RequireSignature>false</RequireSignature>
 
   <!--
-    Empty means any HTTPS host. For tighter security set this to your host(s).
-    For Google Drive include drive.google.com and drive.usercontent.google.com.
+    Empty allows any host. For the current CDN, set this to 147.5.123.159.
   -->
   <AllowedHosts></AllowedHosts>
 
   <!--
-    false for Google Drive/Dropbox/HTTPS.
-    true only when using the plain HTTP QLNPackServer agent.
+    true for a plain HTTP self-hosted CDN. Use HTTPS when available.
   -->
-  <AllowInsecureHttp>false</AllowInsecureHttp>
+  <AllowInsecureHttp>true</AllowInsecureHttp>
 
   <CheckOnMainMenu>true</CheckOnMainMenu>
 
   <!--
-    Show a "Check Mod Pack Updates" button on the main menu. Clicking it opens
-    the update window again after it has been closed.
+    Show a "Mod Packs" button on the main menu. It reopens the pack window.
   -->
   <ShowMainMenuButton>true</ShowMainMenuButton>
 
@@ -70,15 +62,10 @@
 
     <Packs>
       <Pack>
-        <Id>qln</Id>
-        <Name>QLN Server</Name>
-        <ManifestUrl>https://drive.google.com/file/d/FILE_ID/view?usp=sharing</ManifestUrl>
+        <Id>mod-main</Id>
+        <Name>Main Server</Name>
+        <ManifestUrl>http://147.5.123.159:8080/mod-main/manifest.json</ManifestUrl>
         <GameVersion>3.4</GameVersion>
-      </Pack>
-      <Pack>
-        <Id>other</Id>
-        <Name>Other Server</Name>
-        <ManifestUrl>https://example.com/other/manifest.json</ManifestUrl>
       </Pack>
     </Packs>
   -->
@@ -109,9 +96,10 @@
 
   <!--
     How many mods to download at the same time. Allowed range: 1-10.
-    Google Drive often throttles above 3-4, so 4 is a safe default.
+    Self-hosted/CDN servers can usually handle 10. Google Drive often
+    throttles above 3-4, so lower it if you still use Drive.
   -->
-  <MaxParallelDownloads>4</MaxParallelDownloads>
+  <MaxParallelDownloads>10</MaxParallelDownloads>
 
   <!--
     Install target. Empty means "the folder that contains this bootstrap mod

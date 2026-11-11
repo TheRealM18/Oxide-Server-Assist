@@ -402,23 +402,24 @@ GUI kick and ban appear and work only when `AllowGuiKick` and `AllowGuiBan` are 
 
 ## Art status
 
-The menu is fully usable with the current placeholders:
+Server Assist Art **1.4.0** now includes the full 12-icon `sa_ac_*` set. SentinelAC 1.0.2 still uses the older `sa_nav_*` and `sa_act_*` placeholders until its icon constants are switched to the delivered keys.
 
-| Sentinel AC use | Current placeholder |
+| Sentinel AC use | Delivered sprite key |
 |---|---|
-| Provider card, banner, background | `sprite:sa_nav_moderation` |
-| Risk tab and rows | `sprite:sa_act_warn` |
-| Evidence tab and rows | `sprite:sa_nav_logs` |
-| Modules tab | `sprite:sa_nav_server` |
-| Player rows | `sprite:sa_nav_players` |
-| Watch / clear / export | `sprite:sa_act_spectate`, `sprite:sa_nav_logs`, `sprite:sa_nav_snapshots` |
-| Kick / ban / refresh / paging | `sprite:sa_act_kick`, `sprite:sa_act_ban`, `sprite:sa_plugin_hot_reload`, `sprite:sa_act_prev`, `sprite:sa_act_next` |
-| Movement / combat / inventory | `sprite:sa_nav_teleport`, `sprite:sa_nav_moderation`, `sprite:sa_nav_items` |
-| Grief / exploit / progression | `sprite:sa_nav_world`, `sprite:sa_act_godmode`, `sprite:sa_nav_snapshots` |
+| Provider card, banner, background | `sprite:sa_ac_panel` |
+| Risk tab and risk rows | `sprite:sa_ac_risk` |
+| Evidence tab and rows | `sprite:sa_ac_evidence` |
+| Modules tab | `sprite:sa_ac_modules` |
+| Movement module | `sprite:sa_ac_movement` |
+| Combat module | `sprite:sa_ac_combat` |
+| Inventory/economy module | `sprite:sa_ac_inventory` |
+| Grief module | `sprite:sa_ac_grief` |
+| Exploit module | `sprite:sa_ac_exploit` |
+| Progression module | `sprite:sa_ac_progression` |
+| Clear evidence | `sprite:sa_ac_clear` |
+| Export evidence | `sprite:sa_ac_export` |
 
-A dedicated 12-icon `sa_ac_*` set has been requested, but it is **requested, not rendered**: `sa_ac_panel`, `sa_ac_risk`, `sa_ac_evidence`, `sa_ac_modules`, `sa_ac_movement`, `sa_ac_combat`, `sa_ac_inventory`, `sa_ac_grief`, `sa_ac_exploit`, `sa_ac_progression`, `sa_ac_clear` and `sa_ac_export`.
-
-The request lives in [ServerAssistArt/REQUESTS_SentinelAC.md](https://github.com/TheRealM18/Oxide-Server-Assist/blob/main/ServerAssistArt/REQUESTS_SentinelAC.md), which also notes that it is not the active art batch yet. Until the new icons are rendered and the constants in `SentinelAC.cs` are switched, the placeholders remain correct. Install Server Assist Art on the server and every client to see icons; without the art pack, missing sprites fall back to the client's hammer.
+Until the plugin constants are switched, the existing placeholders remain visible: `sa_nav_moderation`, `sa_act_warn`, `sa_nav_logs`, `sa_nav_server`, `sa_nav_players`, `sa_act_spectate`, `sa_nav_snapshots`, `sa_act_kick`, `sa_act_ban` and `sa_plugin_hot_reload`. Install Server Assist Art on the server and every client; without the pack, missing sprites fall back to the client's hammer.
 
 ---
 

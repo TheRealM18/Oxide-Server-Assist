@@ -1,55 +1,44 @@
-# Icon priority list — final audit
+# Icon priority list — post-audit
 
-Status: **P0 + P1 delivered.** 60 unique icons are rendered, built into the
-atlas, and packaged as `AAZ_ServerAssistArt-1.3.0`. P2 (30 icons) remains.
+Status: **all 102 confirmed icons are delivered.** P0 + P1 (60) shipped in
+`AAZ_ServerAssistArt-1.3.0`; P2 (42) shipped in `AAZ_ServerAssistArt-1.4.0`.
 
-Cleanup: 15 unreferenced `sa_announce_*` placeholder aliases were removed from
-the atlas. The 48 `sa_stream_*` legacy aliases remain because TwitchIntegration
-still references them for config migration.
+## New / deprecated plugins
 
-The Twitch agent’s final request is `ServerAssistArt/REQUESTS_TwitchIntegration.md`
-— exactly **30** sprites. It replaces the earlier 78-icon streaming plan.
+- **MediaIntegration** replaces **TwitchIntegration** (the old plugin is
+  deprecated and left in place for rollback).
+  - No new art. It keeps the same 30 `sa_stream_*` sprites.
+  - `MediaIntegration/ICONS.md` explicitly says the 30-icon request is still
+    complete and platform logos are text badges, not painted art.
+- **SentinelAC** is new and requests **12 `sa_ac_*` icons**.
+  - `ServerAssistArt/REQUESTS_SentinelAC.md` is the authoritative list.
+- No other plugin has an outstanding icon request.
 
 ## Reconciliation
 
 | Area | Originally planned | Now | Removed | Added |
 |---|---:|---:|---:|---:|
 | Server Profiles → PlayerProfiles | 23 | 8 | 19 | 4 |
-| Streaming → TwitchIntegration | 78 | 30 | 48 | 0 |
+| Streaming → MediaIntegration | 78 | 30 | 48 | 0 |
 | Announcement plugin | 16 | 0 | 16 | 0 |
 | BungeeNet | 15 | 4 | 11 | 0 |
 | PermissionGui | 7 | 6 | 1 | 0 |
 | Other plugin/kit requests | 40 | 42 | 24 | 26 |
-| **Total** | **179** | **90** | **119** | **30** |
+| SentinelAC (new) | 0 | 12 | 0 | 12 |
+| **Total** | **179** | **102** | **119** | **42** |
 
 - **Originally planned:** 179
 - **Removed by the audits:** 119
-- **Newly added by the audits:** 30
-- **Now to do:** **90**
+- **Newly added by the audits:** 42
+- **Now to do:** **102 total**, of which **60 are delivered** and **42 remain**.
 
-## Confirmed requests — 90 icons
-
-| Plugin | Icons | Source |
-|---|---:|---|
-| PlayerProfiles | 8 | `PlayerProfiles/icon-request.md` |
-| TwitchIntegration | 30 | `ServerAssistArt/REQUESTS_TwitchIntegration.md` |
-| AdminKits | 7 | `ServerAssistArt/REQUESTS_AdminKits.md` |
-| AdminShop | 12 | `ServerAssistArt/REQUESTS_AdminShop.md` |
-| AuctionHouse | 4 | `ServerAssistArt/REQUESTS_AUCTIONHOUSE.md` |
-| DailyRewards | 3 | `ServerAssistArt/REQUESTS_DAILYREWARDS.md` |
-| PermissionGui | 6 | `ICON-REQUESTS-PermissionGui.md` |
-| VoteSkipNight | 4 | `ServerAssistArt/VOTESKIPNIGHT_ICON_REQUEST.md` |
-| AdminSuite | 12 | `ServerAssistArt/REQUESTS_AdminSuite.md` |
-| BuggeeNet | 4 | `BuggeeNet/ICON_TODO.md` |
-| **Total** | **90** | |
-
-## P0 — first render (26 icons, 7 sheets)
+## Delivered — P0 + P1 (60 icons)
 
 - **PlayerProfiles — 8**
   `sa_profile_panel`, `sa_profile_identity`, `sa_profile_active`,
   `sa_profile_switch`, `sa_profile_new`, `sa_profile_rename`,
   `sa_profile_save`, `sa_profile_delete`
-- **Twitch panel/navigation — 12**
+- **MediaIntegration panel/navigation — 12**
   `sa_stream_panel`, `sa_stream_home`, `sa_stream_tier_1`,
   `sa_stream_tier_2`, `sa_stream_tier_3`, `sa_stream_loadout`,
   `sa_stream_catalog`, `sa_stream_link`, `sa_stream_link_pending`,
@@ -57,9 +46,6 @@ The Twitch agent’s final request is `ServerAssistArt/REQUESTS_TwitchIntegratio
 - **PermissionGui — 6**
   `sa_perm_oxide`, `sa_perm_game`, `sa_perm_plugin`, `sa_perm_groups`,
   `sa_perm_users`, `sa_perm_tracks`
-
-## P1 — second render (34 icons, 9 sheets)
-
 - **AdminKits — 7**
   `sa_kits_collect`, `sa_kits_manage`, `sa_kits_create`,
   `sa_kits_from_inventory`, `sa_kits_edit`, `sa_kits_delete`,
@@ -79,46 +65,48 @@ The Twitch agent’s final request is `ServerAssistArt/REQUESTS_TwitchIntegratio
 - **BuggeeNet — 4**
   `sa_buggee_panel`, `sa_buggee_home`, `sa_buggee_info`, `sa_buggee_warn`
 
-## P2 — third render (30 icons, 8 sheets)
+## Delivered — P2 (42 icons, 11 sheets)
 
-- **Twitch buffs — 9**
-  `sa_stream_buff_quick_feet`, `sa_stream_buff_regen`,
-  `sa_stream_buff_looter`, `sa_stream_buff_melee_surge`,
-  `sa_stream_buff_ranged_surge`, `sa_stream_buff_infinite_ammo`,
-  `sa_stream_buff_toughness`, `sa_stream_buff_xp_gain`,
-  `sa_stream_buff_pack_mule`
-- **Twitch debuffs — 9**
-  `sa_stream_debuff_heavy_legs`, `sa_stream_debuff_blurred_vision`,
-  `sa_stream_debuff_no_running`, `sa_stream_debuff_no_melee`,
-  `sa_stream_debuff_no_ranged`, `sa_stream_debuff_encumbered`,
-  `sa_stream_debuff_tougher_enemies`, `sa_stream_debuff_double_spawns`,
-  `sa_stream_debuff_no_healing`
-- **AdminSuite — 12**
-  `sa_act_kill`, `sa_act_note`, `sa_act_clear`, `sa_act_take`,
-  `sa_act_jail`, `sa_act_buff`, `sa_act_debuff`, `sa_act_search`,
-  `sa_act_creative`, `sa_act_rollback`, `sa_act_save`, `sa_act_spawn`
+### MediaIntegration buffs — 9
 
-## $17.50 plan
+`sa_stream_buff_quick_feet`, `sa_stream_buff_regen`,
+`sa_stream_buff_looter`, `sa_stream_buff_melee_surge`,
+`sa_stream_buff_ranged_surge`, `sa_stream_buff_infinite_ammo`,
+`sa_stream_buff_toughness`, `sa_stream_buff_xp_gain`,
+`sa_stream_buff_pack_mule`
 
-Render **P0 + P1 = 60 icons in 16 sheets**. Estimated **~$16.75** at the current
-rate, leaving about **$0.75** in reserve.
+### MediaIntegration debuffs — 9
 
-That covers PlayerProfiles, Twitch panel/navigation, PermissionGui, AdminKits,
-AdminShop, AuctionHouse, DailyRewards, VoteSkipNight and BuggeeNet. P2 (Twitch
-buffs/debuffs + AdminSuite) is about **$8.37** and needs a small top-up.
+`sa_stream_debuff_heavy_legs`, `sa_stream_debuff_blurred_vision`,
+`sa_stream_debuff_no_running`, `sa_stream_debuff_no_melee`,
+`sa_stream_debuff_no_ranged`, `sa_stream_debuff_encumbered`,
+`sa_stream_debuff_tougher_enemies`, `sa_stream_debuff_double_spawns`,
+`sa_stream_debuff_no_healing`
 
-## Removed / not needed
+### AdminSuite — 12
 
-- **119 icons removed** across the audits, including:
-  - 19 server-profile icons that PlayerProfiles does not use
-  - 48 streaming aliases the Twitch panel no longer requests
-  - 16 announcement icons for a plugin that is not present
-  - 11 BungeeNet names that `BuggeeCore` does not reference
-  - 1 PermissionGui browser icon
-  - 24 other plugin/kit icons with no consumer
-- **30 icons added** by the audits: 4 new PlayerProfiles states
-  (`active`, `switch`, `new`, `rename`), 3 AdminKits actions, 8 AdminShop
-  categories/navigation, 1 DailyRewards seasonal, 2 VoteSkipNight states,
-  12 AdminSuite actions.
-- Interim `sa_stream_*` / `sa_announce_*` aliases remain in the atlas for config
-  migration and optional remapping; they are not part of the 90 painted icons.
+`sa_act_kill`, `sa_act_note`, `sa_act_clear`, `sa_act_take`, `sa_act_jail`,
+`sa_act_buff`, `sa_act_debuff`, `sa_act_search`, `sa_act_creative`,
+`sa_act_rollback`, `sa_act_save`, `sa_act_spawn`
+
+### SentinelAC — 12
+
+`sa_ac_panel`, `sa_ac_risk`, `sa_ac_evidence`, `sa_ac_modules`,
+`sa_ac_movement`, `sa_ac_combat`, `sa_ac_inventory`, `sa_ac_grief`,
+`sa_ac_exploit`, `sa_ac_progression`, `sa_ac_clear`, `sa_ac_export`
+
+## Cost
+
+P2 was **42 icons / 11 sheets**, delivered in `AAZ_ServerAssistArt-1.4.0`. The
+batch used **12 image calls** because the first AdminSuite action sheet had to be
+regenerated with the correct subjects. At ~$0.91 per call that is about
+**$10.92**, leaving roughly **$1.50–$2.00** from the $12.50 top-up.
+
+## Cleanup / deprecation
+
+- 15 unreferenced `sa_announce_*` placeholders were removed.
+- The 48 `sa_stream_*` legacy aliases remain because MediaIntegration still
+  references them for config migration.
+- TwitchIntegration is deprecated, but its 30 `sa_stream_*` sprites are still
+  used by MediaIntegration. No textures were removed for the rename.
+- No platform logo art is needed; MediaIntegration uses text badges.
